@@ -60,6 +60,9 @@ def main(argv=None):
         seed=SEED, lr_scheduler_type="linear", warmup_steps=warmup_steps, **prec)
     trainer = Seq2SeqTrainer(model=model, args=args, train_dataset=ds,
                              data_collator=DataCollatorForSeq2Seq(tok, model=model, label_pad_token_id=-100))
+    # With PEFT-wrapped models the Trainer skips dividing the loss by GRAD_ACCUM, so logged losses come out
+    # GRAD_ACCUM times too large. Forcing it to divide makes the logged loss a true per-token mean.
+    trainer.model_accepts_loss_kwargs = False
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
     t0 = time.time()
