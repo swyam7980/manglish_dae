@@ -1,4 +1,6 @@
 """Backbone + tokenizer + LoRA wiring, identical rank/alpha/dropout for all three models."""
+import os
+
 import torch
 from peft import LoraConfig, TaskType, get_peft_model
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
@@ -18,7 +20,8 @@ def run_tag(key, size):
 
 def pick_dtype(key):
     """Returns (weights dtype, Trainer precision flags). T5-family overflows in fp16 -> bf16, else fp32."""
-    if not torch.cuda.is_available():
+    if not torch.cuda.is_available() or os.environ.get("MDAE_FORCE_FP32") == "1":
+        # MDAE_FORCE_FP32=1 is a debugging switch; any run that uses it is a precision deviation to report.
         return torch.float32, {}
     if key in FP16_UNSAFE:
         if torch.cuda.is_bf16_supported():

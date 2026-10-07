@@ -18,8 +18,11 @@ def check(key, size, base_path, rows, steps, val_rows):
     problems = []
     if info["trainable_pct"] >= 5:
         problems.append(f"trainable params {info['trainable_pct']}% (expected well under 5%)")
-    if not info["last_logged_loss"] < info["first_logged_loss"]:
-        problems.append(f"loss did not go down ({info['first_logged_loss']:.3f} -> {info['last_logged_loss']:.3f})")
+    if not info["last_logged_loss"] < 0.9 * info["first_logged_loss"]:
+        problems.append(f"loss fell by less than 10% ({info['first_logged_loss']:.3f} -> {info['last_logged_loss']:.3f})")
+    if res["CER"] > 100:
+        problems.append(f"smoke CER {res['CER']}% is above 100% (output is garbage or never stops; a longer run may fix "
+                        "the latter, run diagnose.py to check)")
     if res["empty_predictions"] == val_rows:
         problems.append("every prediction is empty")
     return problems, info
