@@ -28,6 +28,11 @@ Put the SeLLaI file in `data/raw/` (see `data/README.md`).
 | G eval | `python evaluate.py --model mbart` (same for the others) | every model beats the baseline on CER and WER |
 | H report | `python compare.py` and `python analyze.py` | `results/summary.{csv,md}`, `comparison.png`, `analysis_*.md` |
 
+If a smoke test looks wrong (loss flat or huge, garbage output), run `python diagnose.py --model mt5` (or `mbart`, `byt5`).
+It prints the plain pretrained model's loss on noisy -> clean pairs in the configured precision and in fp32, with a few
+generations. `set MDAE_FORCE_FP32=1` (Windows; `export` elsewhere) forces fp32 for training and evaluation. Any run that
+uses it is a precision deviation to report.
+
 Or everything in order: `python run_all.py --size base [--smoke]`.
 
 ## Settings (all in `src/config.py`, shared by every model)
