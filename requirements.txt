@@ -1,5 +1,5 @@
 # Install torch first (see handout, Step 2), then:
-transformers>=4.44
+transformers>=4.56
 peft>=0.12
 datasets>=2.20
 accelerate>=0.33
@@ -10,3 +10,5 @@ sacrebleu
 pandas
 openpyxl
 matplotlib
+tabulate
+pytest

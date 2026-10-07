@@ -1,9 +1,12 @@
 """Synthetic Manglish corruption: character repetition plus random duplication/deletion."""
 import random
-from config import P_REPEAT, P_DUPDEL, NOISE_SEED
+
+from config import P_REPEAT, P_DUPDEL
 
 
 def corrupt(text: str, rng: random.Random, p_rep: float = P_REPEAT, p_dd: float = P_DUPDEL) -> str:
+    """Repetition (p_rep): alphabetic char followed by 1-3 extra copies.
+    Duplication/deletion (p_dd): alphabetic char doubled or dropped with equal chance."""
     out = []
     for ch in text:
         if not ch.isalpha():
@@ -22,8 +25,8 @@ def corrupt(text: str, rng: random.Random, p_rep: float = P_REPEAT, p_dd: float 
     return noisy if noisy.strip() else text
 
 
-def corrupt_all(sentences, seed: int = NOISE_SEED):
-    """Deterministic per-sentence noise so every backbone sees the identical corrupted data."""
+def corrupt_all(sentences, seed: int):
+    """Deterministic per-sentence noise (seed + index), so every backbone sees identical corrupted data."""
     return [corrupt(s, random.Random(seed * 1_000_003 + i)) for i, s in enumerate(sentences)]
 
 
