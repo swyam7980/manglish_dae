@@ -5,12 +5,11 @@ import sys
 
 import pandas as pd
 import torch
-from peft import PeftModel
-from transformers import AutoTokenizer
 
-from config import PROC_DIR, OUT_DIR, RES_DIR, MAX_LEN
+from config import PROC_DIR, RES_DIR
+from generation import load_adapter, generate, release
 from metrics import score
-from models import load_base, input_prefix, gen_kwargs, run_tag
+from models import run_tag
 
 
 def read_jsonl(p):
@@ -37,24 +36,11 @@ def baseline(max_val=0):
 
 def evaluate(model_key, size="base", beams=1, batch=16, max_val=0, base_path=None, tag_suffix=""):
     tag = run_tag(model_key, size) + tag_suffix
-    ad = OUT_DIR / tag / "adapter"
-    if not (ad / "adapter_config.json").exists():
-        sys.exit(f"No adapter at {ad}. Train first: python train.py --model {model_key} --size {size}")
     val = load_val(max_val)
-    # tokenizer and weights come from disk (the saved adapter), not from the training process
-    tok = AutoTokenizer.from_pretrained(ad)
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
-    model = PeftModel.from_pretrained(load_base(model_key, size, base_path), ad).to(dev).eval()
-    pre, gk = input_prefix(model_key), gen_kwargs(model_key, tok)
+    loaded = load_adapter(model_key, size, tag_suffix, base_path)
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
-    preds = []
-    for i in range(0, len(val), batch):
-        chunk = [pre + r["noisy"] for r in val[i:i + batch]]
-        x = tok(chunk, return_tensors="pt", padding=True, truncation=True, max_length=MAX_LEN).to(dev)
-        with torch.no_grad():
-            y = model.generate(**x, max_length=MAX_LEN, num_beams=beams, do_sample=False, **gk)
-        preds += [p.strip() for p in tok.batch_decode(y, skip_special_tokens=True)]
+    preds = generate(loaded, [r["noisy"] for r in val], beams, batch)
     refs = [r["clean"] for r in val]
     res = score(preds, refs)
     res["empty_predictions"] = sum(not p for p in preds)
@@ -63,6 +49,7 @@ def evaluate(model_key, size="base", beams=1, batch=16, max_val=0, base_path=Non
         RES_DIR / f"preds_{tag}.csv", index=False, encoding="utf-8")
     (RES_DIR / f"metrics_{tag}.json").write_text(json.dumps(res, indent=2))
     print(tag, res)
+    release(loaded)
     return res
 
 

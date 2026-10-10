@@ -13,10 +13,21 @@ SYSTEMS = {
     "byt5_base": "ByT5-base",
     "mt5_base_lr1e-3": "mT5-base (LR 1e-3, deviation)",
     "mt5_base": "mT5-base (LR 2e-4, as specified)",
+    "mbart_large_plusmixed": "mBART-50 + Mixed-Code data",
+    "byt5_base_plusmixed": "ByT5-base + Mixed-Code data",
+    "mt5_base_plusmixed": "mT5-base + Mixed-Code data (LR 2e-4)",
+    "mt5_base_lr1e-3_plusmixed": "mT5-base + Mixed-Code data (LR 1e-3)",
+    "mbart_large_plusall": "mBART-50 + Mixed-Code + Dakshina",
+    "byt5_base_plusall": "ByT5-base + Mixed-Code + Dakshina",
+    "mt5_base_plusall": "mT5-base + Mixed-Code + Dakshina (LR 2e-4)",
+    "mt5_base_lr1e-3_plusall": "mT5-base + Mixed-Code + Dakshina (LR 1e-3)",
 }
 METRICS = ["CER", "WER", "BLEU", "chrF"]
 BOOT = 2000
-PAIRS = [("mbart_large", "byt5_base"), ("mbart_large", "mt5_base_lr1e-3"), ("byt5_base", "mt5_base_lr1e-3")]
+PAIRS = [("mbart_large", "byt5_base"), ("mbart_large", "mt5_base_lr1e-3"), ("byt5_base", "mt5_base_lr1e-3"),
+         ("mbart_large_plusmixed", "mbart_large"), ("byt5_base_plusmixed", "byt5_base"),
+         ("mbart_large_plusmixed", "byt5_base_plusmixed"), ("mbart_large_plusall", "mbart_large_plusmixed"),
+         ("byt5_base_plusall", "byt5_base_plusmixed")]
 SHOW_EXAMPLES = 8
 
 
@@ -69,7 +80,8 @@ def main():
         data["systems"].append({
             "key": base, "label": label, "n_seeds": len(runs), "runs": runs, "agg": agg,
             "train_min": info["minutes"], "peak_gpu_gb": info["peak_gpu_gb"], "trainable_pct": info["trainable_pct"],
-            "precision": info["precision"], "loss_history": info["loss_history"], "patterns": pattern_stats(base)})
+            "precision": info["precision"], "loss_history": info["loss_history"], "patterns": pattern_stats(base),
+            "train_rows": info.get("train_rows"), "micro_batch": info.get("micro_batch")})
         preds[base] = pd.read_csv(RES_DIR / f"preds_{base}.csv").fillna("")
 
     rng = np.random.default_rng(0)

@@ -54,3 +54,33 @@ def test_baseline_compare_analyze(prepared):
     analyze.main()
     from config import RES_DIR
     assert (RES_DIR / "summary.csv").exists() and (RES_DIR / "comparison.png").exists()
+
+
+def test_train_oom_backoff_and_extra_train_file(prepared, monkeypatch):
+    """A first out-of-memory error must halve the micro-batch, keep the effective batch and still finish."""
+    import torch
+    import train
+    from config import PROC_DIR, OUT_DIR, EFFECTIVE_BATCH
+    rows = [json.loads(line) for line in open(PROC_DIR / "train.jsonl", encoding="utf-8")][:48]
+    with open(PROC_DIR / "train_plus_unit.jsonl", "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps({**r, "source": "unit"}) + "\n")
+    real, calls = train.Seq2SeqTrainer.train, {"n": 0}
+
+    def flaky(self, *a, **k):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise torch.cuda.OutOfMemoryError("out of memory")
+        return real(self, *a, **k)
+    monkeypatch.setattr(train.Seq2SeqTrainer, "train", flaky)
+    info = train.main(["--model", "mt5", "--size", "tiny", "--base-path", prepared["mt5"], "--train-file",
+                       "train_plus_unit.jsonl", "--max-steps", "3", "--auto-batch", "--resume", "--save-steps", "2",
+                       "--tag-suffix", "_oom"])
+    from memory import next_smaller
+    assert len(info["oom_retries"]) == 1                                # the injected OOM, handled once
+    first = info["oom_retries"][0]
+    assert first["to"] == next_smaller(first["from"]) == info["micro_batch"]   # 16 -> 8 with CUDA (auto-batch), 2 -> 1 on CPU
+    assert info["micro_batch"] * info["grad_accum"] == EFFECTIVE_BATCH
+    assert info["train_rows"] == 48 and info["train_file"] == "train_plus_unit.jsonl"
+    assert (OUT_DIR / "mt5_tiny_oom" / "adapter" / "adapter_config.json").exists()
+    assert not (OUT_DIR / "mt5_tiny_oom" / "ckpt").exists()             # checkpoints are cleaned up after a finished run
