@@ -141,6 +141,8 @@ const ns = 'http://www.w3.org/2000/svg';
 function S(tag, attrs, text) { const n = document.createElementNS(ns, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (text !== undefined) n.textContent = text; return n; }
 const sys = Object.fromEntries(D.systems.map(s => [s.key, s]));
 const ranked = [...D.systems].sort((a, b) => a.agg.CER.mean - b.agg.CER.mean);
+const SHORT = {mbart_large:'mBART-50', byt5_base:'ByT5-base', 'mt5_base_lr1e-3':'mT5, LR 1e-3 *', mt5_base:'mT5, LR 2e-4'};
+const short = k => SHORT[k] || k;
 const lbl = k => (sys[k] ? sys[k].label : k);
 const cell = (s, m) => { const a = s.agg[m]; return fmt(a.mean) + (a.sd !== null ? ` <span class="sd">± ${fmt(a.sd)}</span>` : ''); };
 
@@ -190,7 +192,7 @@ function renderBars() {
   }
   items.forEach((s, i) => {
     const y = top + i * rowH;
-    svg.appendChild(S('text', {x: left - 12, y: y + rowH / 2 + 4, 'text-anchor': 'end', class: 'lab'}, s.label.replace(/ \(.*\)/, '') + (s.label.includes('(') ? ' *' : '')));
+    svg.appendChild(S('text', {x: left - 12, y: y + rowH / 2 + 4, 'text-anchor': 'end', class: 'lab'}, short(s.key)));
     svg.appendChild(S('rect', {x: left, y: y + 9, width: Math.max(1, x(s.agg[metric].mean) - left), height: rowH - 20, rx: 3, fill: COLORS[s.key], opacity: 0.88}));
     s.runs.forEach(r => svg.appendChild(S('circle', {cx: x(r[metric]), cy: y + rowH / 2, r: 3.6, fill: 'var(--surface)', stroke: 'var(--fg)', 'stroke-width': 1.4})));
     svg.appendChild(S('text', {x: x(Math.max(s.agg[metric].mean, ...s.runs.map(r => r[metric]))) + 10, y: y + rowH / 2 + 4, class: 'val'}, fmt(s.agg[metric].mean)));
@@ -214,7 +216,7 @@ function renderForest() {
   P.forEach((p, i) => {
     const y = top + i * rowH + rowH / 2;
     const clear = p.hi < 0 || p.lo > 0;
-    svg.appendChild(S('text', {x: left - 12, y: y + 4, 'text-anchor': 'end', class: 'lab'}, lbl(p.a).replace(/ \(.*\)/, '') + ' minus ' + lbl(p.b).replace(/ \(.*\)/, '')));
+    svg.appendChild(S('text', {x: left - 12, y: y + 4, 'text-anchor': 'end', class: 'lab'}, short(p.a) + ' minus ' + short(p.b)));
     svg.appendChild(S('line', {x1: x(p.lo), x2: x(p.hi), y1: y, y2: y, stroke: clear ? 'var(--fg)' : 'var(--muted)', 'stroke-width': 3, 'stroke-linecap': 'round'}));
     svg.appendChild(S('circle', {cx: x(p.mean), cy: y, r: 5.5, fill: clear ? 'var(--fg)' : 'var(--surface)', stroke: clear ? 'var(--fg)' : 'var(--muted)', 'stroke-width': 2}));
     svg.appendChild(S('text', {x: x(p.hi) + 10, y: y + 4, class: 'val'}, `${p.mean > 0 ? '+' : ''}${fmt(p.mean)}${clear ? '' : ' (overlaps 0)'}`));
@@ -248,7 +250,7 @@ function renderLoss() {
 
 function renderExamples() {
   const keys = D.systems.map(s => s.key);
-  let h = '<thead><tr><th>Noisy input</th><th>Clean target</th>' + keys.map(k => `<th>${lbl(k).replace(/ \(.*\)/, '')}${lbl(k).includes('(') ? ' *' : ''}</th>`).join('') + '</tr></thead><tbody>';
+  let h = '<thead><tr><th>Noisy input</th><th>Clean target</th>' + keys.map(k => `<th>${short(k)}</th>`).join('') + '</tr></thead><tbody>';
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   D.examples.forEach(e => {
     h += `<tr><td>${esc(e.noisy)}</td><td>${esc(e.clean)}</td>` + keys.map(k => `<td class="${e[k] === e.clean ? 'ok' : 'no'}">${esc(e[k])}</td>`).join('') + '</tr>';

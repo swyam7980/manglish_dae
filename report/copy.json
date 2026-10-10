@@ -1,0 +1,22 @@
+{
+ "headline": "ByT5 averages lower error, mBART is steadier, and three seeds cannot separate them",
+ "lede": "Adapting each backbone with LoRA to turn noisy Manglish back into clean Manglish, both <strong>ByT5-base</strong> and <strong>mBART-50</strong> cut character error from 21.1% (copying the input) to about 6 to 8%. ByT5 has the lower mean on all four metrics (CER 6.3 against 7.9), but its seeds range from 4.4 to 8.1 while mBART stays between 7.6 and 8.1. mT5 is clearly behind.",
+ "resultsSub": "Mean ± SD over three training seeds (42, 43, 44) for the top three systems; mT5 at the specified learning rate ran once. 325 validation sentences. Bold marks the best mean in each column.",
+ "pairSub": "Bootstrap over validation sentences, seed 42 only: CER of the first system minus the second, with a 95% interval. Seed 42 was ByT5's worst run (CER 8.11, against 6.43 and 4.35 for seeds 43 and 44), so this interval understates ByT5's average edge. Across the three seeds, Welch's t for ByT5 against mBART on CER is about 1.5 with roughly 2 degrees of freedom; significance would need about 4.3. The data neither confirm nor rule out a difference between the two.",
+ "reco": "<p><strong>Use ByT5-base as the default, and treat that as provisional.</strong> It has the lowest mean error on every metric, the best BLEU and chrF, no unresolved letter repetition in the seed-42 error analysis, and it needs about half the GPU memory of mBART (2.1 GB against 4.0 GB). Two of its three seeds beat mBART's best run.</p><p><strong>Choose mBART-50 if you need predictable results.</strong> Its CER varies by 0.3 across seeds, ByT5's by 1.9. It also trains faster (18.7 against 24.3 minutes).</p><p><strong>Do not use mT5-base for this task.</strong> At the specified learning rate it fails. At 1e-3 it works, but every one of its seeds is worse than every mBART and ByT5 seed.</p><p>Before relying on ByT5, add a length check on its output. Its worst failures drop most of the sentence. A few more seeds, or a larger validation set, would settle the ByT5 against mBART question.</p>",
+ "limits": [
+  "The noise is synthetic: letter repetition (10% per character) and duplication or deletion (4%). Results show robustness to that noise, not to real social-media writing.",
+  "Three seeds for the top systems, one for mT5 at its specified learning rate. The seeds vary training only; the split and the validation noise are fixed.",
+  "One split and 325 validation sentences, so small gaps are within noise.",
+  "Caption-style Manglish from one dataset.",
+  "Denoising only. No translation-quality claim is made."
+ ],
+ "devs": [
+  "Dataset: SeLLaI Manglish class, 3,259 sentences after deduplication (2,934 train, 325 validation), not the roughly 15,000 in the proposal.",
+  "Text type is caption-style, not social media.",
+  "mT5 and ByT5 train in bf16 instead of FP16, because T5-family models overflow in FP16.",
+  "mT5 also ran at learning rate 1e-3 instead of 2e-4, labelled as a deviation. The specified run is kept: CER 47.3, 21% of sentences over-corrected, 33% with unresolved repeats.",
+  "Seeds 43 and 44 were added beyond the proposal's single run.",
+  "Noise rates 0.10 and 0.04, a 120-character cap, the mT5 prefix and mBART language code en_XX are choices the proposal leaves open."
+ ]
+}
