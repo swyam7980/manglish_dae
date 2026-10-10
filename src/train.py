@@ -27,12 +27,14 @@ def main(argv=None):
     ap.add_argument("--max-train", type=int, default=0, help="cap train rows (smoke tests)")
     ap.add_argument("--max-steps", type=int, default=-1)
     ap.add_argument("--grad-ckpt", action="store_true", help="gradient checkpointing (saves VRAM, slower)")
+    ap.add_argument("--lr", type=float, default=LR, help="learning rate override (report any change as a deviation)")
+    ap.add_argument("--seed", type=int, default=SEED, help="training seed only; the data split and noise stay fixed")
     ap.add_argument("--tag-suffix", default="", help="appended to the output folder name (smoke tests)")
     a = ap.parse_args(argv)
 
     if not (PROC_DIR / "train.jsonl").exists():
         sys.exit(f"{PROC_DIR / 'train.jsonl'} missing. Run data_prep.py first.")
-    set_seed(SEED)
+    set_seed(a.seed)
     tok = load_tokenizer(a.model, a.size, a.base_path)
     pre = input_prefix(a.model)
     rows = read_jsonl(PROC_DIR / "train.jsonl")
@@ -55,9 +57,9 @@ def main(argv=None):
     out = OUT_DIR / (run_tag(a.model, a.size) + a.tag_suffix)
     args = Seq2SeqTrainingArguments(
         output_dir=str(out / "ckpt"), per_device_train_batch_size=BATCH_SIZE,
-        gradient_accumulation_steps=GRAD_ACCUM, learning_rate=LR, num_train_epochs=a.epochs,
+        gradient_accumulation_steps=GRAD_ACCUM, learning_rate=a.lr, num_train_epochs=a.epochs,
         max_steps=a.max_steps, logging_steps=min(10, max(1, total_steps // 3)), save_strategy="no", report_to="none",
-        seed=SEED, lr_scheduler_type="linear", warmup_steps=warmup_steps, **prec)
+        seed=a.seed, lr_scheduler_type="linear", warmup_steps=warmup_steps, **prec)
     trainer = Seq2SeqTrainer(model=model, args=args, train_dataset=ds,
                              data_collator=DataCollatorForSeq2Seq(tok, model=model, label_pad_token_id=-100))
     # With PEFT-wrapped models the Trainer skips dividing the loss by GRAD_ACCUM, so logged losses come out

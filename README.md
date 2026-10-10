@@ -49,6 +49,17 @@ Choices the proposal does not fix, state these in the report:
   because T5-family models overflow in fp16.
 - mT5 and ByT5 must use the same size tier (`--size`).
 
+## Extra seeds, deviations and the results page
+
+- `train.py --seed N` changes only the training seed; the split and the validation noise stay fixed. Pair it with
+  `--tag-suffix _sN` so each run gets its own folder. `src/run_seeds.sh` runs seeds 43 and 44 for all three backbones.
+- `train.py --lr X` overrides the learning rate. Any run that uses it is a deviation and must be reported as one
+  (the mT5 rerun at 1e-3 is labelled that way; the specified 2e-4 run is kept alongside it).
+- `compare.py` ranks the seed-42 runs only; `seeds.py` aggregates every seed (mean and SD) and runs a paired
+  bootstrap on the CER difference between models, writing `results/report_data.json`.
+- `build_report.py` turns that into the static page `report/index.html` (prose lives in `report/copy.json`).
+  Open the file in a browser; it has no server and no dependencies beyond Google Fonts.
+
 ## Tests
 
 `pytest tests` runs unit tests (noise, metrics, data prep) and an offline end-to-end wiring test on tiny randomly
@@ -56,5 +67,5 @@ initialised models (no downloads). They verify the plumbing, not model quality; 
 
 ## Limits of the study
 
-Synthetic noise only, one seed, one split, no translation claim. If the models are within seed-to-seed variation,
+Synthetic noise only, three training seeds, one split, no translation claim. If the models are within seed-to-seed variation,
 report that instead of declaring a winner.
