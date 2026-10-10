@@ -1,5 +1,6 @@
 """Collect every metrics_*.json, rank baseline + backbones by CER, write results/summary.{csv,md} and a chart."""
 import json
+import re
 
 import matplotlib
 matplotlib.use("Agg")
@@ -13,7 +14,7 @@ def main():
     rows = []
     for p in sorted(RES_DIR.glob("metrics_*.json")):
         tag = p.stem.replace("metrics_", "")
-        if tag.endswith("_smoke"):
+        if tag.endswith("_smoke") or re.search(r"_s\d+$", tag):
             continue
         d = json.loads(p.read_text())
         d["system"] = tag
