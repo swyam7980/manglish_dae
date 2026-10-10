@@ -8,3 +8,4 @@ data/processed/
 outputs/
 results/
 *.log
+report/fragment.html
