@@ -15,19 +15,20 @@ def test_build_extra_removes_val_overlap_and_duplicates():
         "a": ["Oru Velutha Christmas Tree", "oru-velutha christmas tree!", "nalla movie aanu", "nalla movie aanu", "ente veedu evide aanu"],
         "b": ["nalla  movie aanu", "vere sentence und", "x"],
     }
-    rows, stats = build_extra(sources, val, base)
+    rows, held, stats = build_extra(sources, val, base)
+    assert held == []
     got = [s for s, _ in rows]
     assert got == ["nalla movie aanu", "vere sentence und"]          # val look-alikes, in-source and cross-source dups, too short: gone
     assert stats["a"]["dropped_val_overlap"] == 2
-    assert stats["a"]["added"] == 1 and stats["b"]["added"] == 1
+    assert stats["a"]["train_added"] == 1 and stats["b"]["train_added"] == 1
     assert dict((s, src) for s, src in rows)["vere sentence und"] == "b"
 
 
 def test_build_extra_cap_is_deterministic():
     from extra_data import build_extra
     src = {"a": [f"sentence number {chr(97 + i)}{chr(97 + j)} aanu" for i in range(10) for j in range(10)]}
-    r1, _ = build_extra(src, [], [], cap_per_source=20)
-    r2, _ = build_extra(src, [], [], cap_per_source=20)
+    r1, _, _ = build_extra(src, [], [], cap_per_source=20)
+    r2, _, _ = build_extra(src, [], [], cap_per_source=20)
     assert len(r1) == 20 and r1 == r2
 
 
@@ -109,3 +110,16 @@ def test_length_guard_and_collapse():
     preds = ["old man", "oru velutha dog"]
     out, n = generation.length_guard(preds, noisy)
     assert n == 1 and out[0] == generation.collapse_runs(noisy[0]) and out[1] == preds[1]
+
+
+def test_holdout_split_is_disjoint_proportional_and_deterministic():
+    from extra_data import build_extra
+    src = {"a": [f"sentence alpha {i:03d} aanu" for i in range(100)], "b": [f"vere beta {i:03d} und" for i in range(50)]}
+    val = ["sentence alpha 000 aanu"]
+    tr1, ho1, st = build_extra(src, val, [], holdout_fraction=0.10)
+    tr2, ho2, _ = build_extra(src, val, [], holdout_fraction=0.10)
+    assert (tr1, ho1) == (tr2, ho2)
+    assert st["a"]["held_out"] == 9 and st["b"]["held_out"] == 5       # 10% of each source after val overlap removal
+    assert not {s for s, _ in tr1} & {s for s, _ in ho1}
+    assert all(src_name in ("a", "b") for _, src_name in ho1)
+    assert "sentence alpha 000 aanu" not in {s for s, _ in tr1 + ho1}

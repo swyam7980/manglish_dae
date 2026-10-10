@@ -1,7 +1,9 @@
 """Reconstruct the validation set from a saved adapter and score it. Also scores the no-model baseline."""
 import argparse
 import json
+import random
 import sys
+from pathlib import Path
 
 import pandas as pd
 import torch
@@ -23,6 +25,19 @@ def load_val(max_val=0):
         sys.exit(f"{p} missing. Run data_prep.py first.")
     val = read_jsonl(p)
     return val[:max_val] if max_val else val
+
+
+def load_eval(name="val.jsonl", max_eval=0, seed=0):
+    """Rows of an evaluation file in data/processed. max_eval draws a fixed random subsample (same rows every call),
+    keeping the file's mix of sources; use it for the slower studies, never for the headline numbers."""
+    p = Path(name) if Path(name).is_absolute() else PROC_DIR / name
+    if not p.exists():
+        sys.exit(f"{p} missing. Run data_prep.py (val.jsonl) or extra_data.py (test_<tag>.jsonl) first.")
+    rows = read_jsonl(p)
+    if max_eval and max_eval < len(rows):
+        keep = sorted(random.Random(seed).sample(range(len(rows)), max_eval))
+        rows = [rows[i] for i in keep]
+    return rows
 
 
 def baseline(max_val=0):

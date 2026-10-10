@@ -9,7 +9,7 @@ import json
 import pandas as pd
 
 from config import RES_DIR
-from evaluate import load_val
+from evaluate import load_eval
 from generation import (load_adapter, generate, release, seed_suffixes, parse_systems, length_guard, collapse_runs,
                         GUARD_MIN_RATIO)
 from metrics import score
@@ -22,14 +22,16 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--systems", nargs="+", default=DEFAULT_SYSTEMS, help="key or key:variant, e.g. mt5:_lr1e-3")
     ap.add_argument("--size", default="base")
+    ap.add_argument("--base-path", help="local model directory instead of the Hub id (offline tests)")
     ap.add_argument("--beams", type=int, default=4)
     ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--min-ratio", type=float, default=GUARD_MIN_RATIO)
-    ap.add_argument("--max-val", type=int, default=0)
+    ap.add_argument("--eval-file", default="val.jsonl", help="evaluation file in data/processed (e.g. test_all.jsonl)")
+    ap.add_argument("--max-eval", type=int, default=0, help="fixed random subsample of the evaluation file (0 = all)")
     ap.add_argument("--out", default="decoding")
     a = ap.parse_args(argv)
 
-    val = load_val(a.max_val)
+    val = load_eval(a.eval_file, a.max_eval)
     noisy, refs = [r["noisy"] for r in val], [r["clean"] for r in val]
     out_dir = RES_DIR / a.out
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -37,7 +39,7 @@ def main(argv=None):
              **score([collapse_runs(n) for n in noisy], refs)}]
     for key, variant in parse_systems(a.systems):
         for seed, suffix in seed_suffixes(key, a.size, variant):
-            loaded = load_adapter(key, a.size, suffix)
+            loaded = load_adapter(key, a.size, suffix, a.base_path)
             for beams in (1, a.beams):
                 preds = generate(loaded, noisy, beams, a.batch)
                 guarded, replaced = length_guard(preds, noisy, a.min_ratio)

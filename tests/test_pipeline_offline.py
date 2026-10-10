@@ -84,3 +84,31 @@ def test_train_oom_backoff_and_extra_train_file(prepared, monkeypatch):
     assert info["train_rows"] == 48 and info["train_file"] == "train_plus_unit.jsonl"
     assert (OUT_DIR / "mt5_tiny_oom" / "adapter" / "adapter_config.json").exists()
     assert not (OUT_DIR / "mt5_tiny_oom" / "ckpt").exists()             # checkpoints are cleaned up after a finished run
+
+
+def test_studies_run_end_to_end_on_tiny_models(prepared):
+    """eval_combined, decode_study and robustness must run, write their files and agree with plain evaluation."""
+    import pandas as pd
+    import decode_study, eval_combined, robustness, train
+    from config import PROC_DIR, RES_DIR
+    from evaluate import evaluate
+    train.main(["--model", "mt5", "--size", "tiny", "--base-path", prepared["mt5"], "--max-train", "64",
+                "--max-steps", "3", "--tag-suffix", "_st"])
+    rows = [json.loads(line) for line in open(PROC_DIR / "val.jsonl", encoding="utf-8")][:40]
+    with open(PROC_DIR / "test_unit.jsonl", "w", encoding="utf-8") as f:
+        for i, r in enumerate(rows):
+            f.write(json.dumps({**r, "source": "src_a" if i % 2 else "src_b"}) + "\n")
+    common = ["--systems", "mt5:_st", "--size", "tiny", "--base-path", prepared["mt5"], "--eval-file", "test_unit.jsonl"]
+    det = eval_combined.main([*common, "--out", "unit_combined"])
+    assert set(det.source) == {"ALL", "src_a", "src_b"} and {"copy_input", "rule_collapse_runs", "mt5_st"} <= set(det.system)
+    assert (RES_DIR / "unit_combined" / "combined_summary.json").exists()
+    mt5_all = det[(det.system == "mt5_st") & (det.source == "ALL")].iloc[0]
+    assert mt5_all.n == 40
+    plain = evaluate("mt5", "tiny", max_val=40, base_path=prepared["mt5"], tag_suffix="_st")
+    assert abs(mt5_all.CER - plain["CER"]) < 1e-9                         # same adapter, same rows, same greedy decoding
+    dec = decode_study.main([*common, "--max-eval", "20", "--out", "unit_decoding"])
+    assert {"beam1", "beam1+guard", "beam4", "beam4+guard", "rule"} <= set(dec.config)
+    rob = robustness.main([*common, "--max-eval", "20", "--out", "unit_robust"])
+    assert {"base", "heavy", "extreme", "vowel_drop", "phonetic", "phonetic_plus_base"} == set(rob.condition)
+    copy_cer = rob[rob.system == "copy_input"].set_index("condition").CER
+    assert copy_cer["extreme"] > copy_cer["heavy"] > copy_cer["base"]    # heavier noise really is heavier

@@ -10,7 +10,7 @@ import json
 import pandas as pd
 
 from config import RES_DIR
-from evaluate import load_val
+from evaluate import load_eval
 from generation import load_adapter, generate, release, seed_suffixes, parse_systems, collapse_runs
 from metrics import score
 from noise import CONDITIONS, apply_condition
@@ -29,12 +29,14 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--systems", nargs="+", default=DEFAULT_SYSTEMS)
     ap.add_argument("--size", default="base")
+    ap.add_argument("--base-path", help="local model directory instead of the Hub id (offline tests)")
     ap.add_argument("--batch", type=int, default=16)
-    ap.add_argument("--max-val", type=int, default=0)
+    ap.add_argument("--eval-file", default="val.jsonl", help="evaluation file in data/processed (e.g. test_all.jsonl)")
+    ap.add_argument("--max-eval", type=int, default=0, help="fixed random subsample of the evaluation file (0 = all)")
     ap.add_argument("--out", default="robustness")
     a = ap.parse_args(argv)
 
-    val = load_val(a.max_val)
+    val = load_eval(a.eval_file, a.max_eval)
     refs = [r["clean"] for r in val]
     inputs = {c: condition_inputs(val, c) for c in CONDITIONS}
     out_dir = RES_DIR / a.out
@@ -45,7 +47,7 @@ def main(argv=None):
         rows.append({"system": "rule_collapse_runs", "seed": 0, "condition": c, **score([collapse_runs(n) for n in noisy], refs)})
     for key, variant in parse_systems(a.systems):
         for seed, suffix in seed_suffixes(key, a.size, variant):
-            loaded = load_adapter(key, a.size, suffix)
+            loaded = load_adapter(key, a.size, suffix, a.base_path)
             for c, noisy in inputs.items():
                 rows.append({"system": f"{key}{variant}", "seed": seed, "condition": c,
                              **score(generate(loaded, noisy, 1, a.batch), refs)})
