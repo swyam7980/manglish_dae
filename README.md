@@ -49,16 +49,72 @@ Choices the proposal does not fix, state these in the report:
   because T5-family models overflow in fp16.
 - mT5 and ByT5 must use the same size tier (`--size`).
 
-## Extra seeds, deviations and the results page
+## More data: three sources, one combined test set
+
+Beyond the original Manglish class (2,934 train / 325 validation), `extra_data.py` builds a larger training file and a
+combined multi-source test file from three sources:
+
+| Source | Licence | Notes |
+|---|---|---|
+| SeLLaI Manglish class | CC BY 4.0 | original data, validation set unchanged |
+| SeLLaI Mixed-Code class | CC BY 4.0 | Latin-script code-mixed captions, same file |
+| Dakshina Malayalam romanised sentences | CC BY-SA 4.0 | `dakshina_dataset_v1.0.tar` from Google, about 2 GB; formal Wikipedia text; the loader reads only the Malayalam romanised files straight from the tar |
+
+```bash
+cd src
+python extra_data.py --tag all --sellai-label Mixed-Code --dakshina ../data/raw/dakshina_dataset_v1.0.tar
+```
+
+This writes `data/processed/train_plus_all.jsonl` (18,548 sentences) and `test_all.jsonl` (2,059 sentences, 10% of each
+extra source plus the original 325 validation sentences) and a `.stats.json` with the sanitiser's counts. No test
+sentence is in any training file, and duplicates across sources (exact or ignoring spaces and punctuation) are removed.
+
+**Sanitiser** (`sanitize.py`): repairs Unicode forms, HTML entities, control and zero-width characters, curly quotes,
+emoji, URLs and mentions; drops non-Latin script, truncated fragments, elongated letters, digit- or symbol-heavy
+lines, gibberish tokens, repeated words, single words and over-long lines (these are split at clause boundaries
+first). Every dropped line is counted by reason, with examples, in the stats file. The original Manglish class is
+audited but not re-filtered, so the 325-sentence validation set and all earlier results stay exactly comparable.
+
+Train on it with `python train.py --model byt5 --train-file train_plus_all.jsonl --auto-batch --resume --tag-suffix _plusall`.
+
+## Memory fail-safes
+
+More data does not raise GPU memory (the batch does), but the tools protect a 6 GB card anyway; the effective batch
+stays at 16 in every case:
+
+- `--auto-batch` runs one forward and backward pass on the longest training examples and picks the largest micro-batch
+  that fits the free VRAM with headroom (`memory.py`). The probe prints its predicted peaks; they matched real peaks.
+- An out-of-memory error during training halves the micro-batch, rebuilds the model and retries (up to four times).
+- `--resume` writes a checkpoint every 200 steps and continues from the latest one after a crash or power cut.
+- Generation (`generation.py`) halves its batch on out-of-memory too.
+
+## Extra seeds, deviations and the follow-up studies
 
 - `train.py --seed N` changes only the training seed; the split and the validation noise stay fixed. Pair it with
-  `--tag-suffix _sN` so each run gets its own folder. `src/run_seeds.sh` runs seeds 43 and 44 for all three backbones.
+  `--tag-suffix _sN` so each run gets its own folder. `src/run_seeds.sh` runs seeds 43 and 44 for all three backbones;
+  `run_more.py --phases seeds` adds seeds 45 and 46 for mBART-50 and ByT5.
 - `train.py --lr X` overrides the learning rate. Any run that uses it is a deviation and must be reported as one
-  (the mT5 rerun at 1e-3 is labelled that way; the specified 2e-4 run is kept alongside it).
-- `compare.py` ranks the seed-42 runs only; `seeds.py` aggregates every seed (mean and SD) and runs a paired
-  bootstrap on the CER difference between models, writing `results/report_data.json`.
-- `build_report.py` turns that into the static page `report/index.html` (prose lives in `report/copy.json`).
-  Open the file in a browser; it has no server and no dependencies beyond Google Fonts.
+  (the mT5 runs at 1e-3 are labelled that way; the specified 2e-4 runs are kept alongside them).
+- `eval_combined.py` scores every trained seed on the combined test set, overall and per source.
+- `robustness.py` scores every adapter on noise it was not trained on (2 and 3 times the rates, vowel dropping,
+  phonetic spelling variants) without retraining.
+- `decode_study.py` compares greedy and 4-beam decoding, with and without a length guard that replaces outputs under
+  60% of the input length with a rule-based cleaning, and scores the rule-based cleaner (collapse letter runs) alone.
+- `compare.py` ranks the seed-42 runs only; `seeds.py` aggregates every seed (mean and SD) and runs paired bootstraps on
+  the CER difference between models, on the validation set and on the combined test set.
+- `run_more.py` runs all of the above as one resumable queue in phases (`seeds data train combined studies report`);
+  finished steps are skipped and a failing step does not stop the rest:
+
+```bash
+cd src
+python run_more.py --phases seeds
+python run_more.py --phases data train combined studies report --dakshina ../data/raw/dakshina_dataset_v1.0.tar
+```
+
+- `collect_results.py` copies the metrics, predictions and summaries into `results/` (committed, 4 MB), and
+  `build_report.py` turns them into the static page `report/index.html` (prose lives in `report/copy.json`). Open the
+  file in a browser; it has no server and no dependencies beyond Google Fonts. Adapters (`outputs/`) and datasets
+  (`data/`) are not committed.
 
 ## Tests
 
@@ -67,5 +123,7 @@ initialised models (no downloads). They verify the plumbing, not model quality; 
 
 ## Limits of the study
 
-Synthetic noise only, three training seeds, one split, no translation claim. If the models are within seed-to-seed variation,
-report that instead of declaring a winner.
+Synthetic noise only (plus two unseen synthetic types in the robustness test), one split per protocol, no translation
+claim. The small-data models ran five seeds; the models trained on the combined data ran once, so their ranking
+rests on a large test set but not on seed variation. Two of the three datasets are caption-style; Dakshina is formal
+Wikipedia text. If models are within seed-to-seed variation, report that instead of declaring a winner.

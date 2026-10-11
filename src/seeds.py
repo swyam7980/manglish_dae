@@ -25,9 +25,12 @@ SYSTEMS = {
 METRICS = ["CER", "WER", "BLEU", "chrF"]
 BOOT = 2000
 PAIRS = [("mbart_large", "byt5_base"), ("mbart_large", "mt5_base_lr1e-3"), ("byt5_base", "mt5_base_lr1e-3"),
-         ("mbart_large_plusmixed", "mbart_large"), ("byt5_base_plusmixed", "byt5_base"),
-         ("mbart_large_plusmixed", "byt5_base_plusmixed"), ("mbart_large_plusall", "mbart_large_plusmixed"),
-         ("byt5_base_plusall", "byt5_base_plusmixed")]
+         ("mbart_large_plusall", "mbart_large"), ("byt5_base_plusall", "byt5_base"),
+         ("byt5_base_plusall", "mbart_large_plusall")]
+# the same questions on the larger combined test set (seed-42 predictions written by eval_combined.py)
+COMBINED_PAIRS = [("mbart", "byt5"), ("mbart_plusall", "mbart"), ("byt5_plusall", "byt5"), ("byt5_plusall", "mbart_plusall"),
+                  ("mt5_lr1e-3_plusall", "mt5_lr1e-3"), ("byt5_plusall", "mt5_lr1e-3_plusall")]
+COMBINED_BOOT = 500
 SHOW_EXAMPLES = 8
 
 
@@ -42,11 +45,11 @@ def seed_of(tag):
     return int(m.group(1)) if m else 42
 
 
-def bootstrap_diff(a, b, clean, rng):
+def bootstrap_diff(a, b, clean, rng, boot=BOOT):
     """Paired bootstrap of corpus CER(a) - CER(b) over validation sentences. Negative favours a."""
     n = len(clean)
     diffs = []
-    for _ in range(BOOT):
+    for _ in range(boot):
         idx = rng.integers(0, n, n)
         refs = [clean[i] for i in idx]
         diffs.append((jiwer.cer(refs, [a[i] for i in idx]) - jiwer.cer(refs, [b[i] for i in idx])) * 100)
@@ -91,6 +94,18 @@ def main():
             mean, lo, hi = bootstrap_diff(preds[a]["pred"].tolist(), preds[b]["pred"].tolist(), clean, rng)
             data["pairs"].append({"a": a, "b": b, "mean": mean, "lo": lo, "hi": hi})
 
+    data["pairs_combined"] = []
+    cpreds = {}
+    for name in {n for pair in COMBINED_PAIRS for n in pair}:
+        p = RES_DIR / "combined_all" / f"preds_{name}.csv"
+        if p.exists():
+            cpreds[name] = pd.read_csv(p).fillna("")
+    for a, b in COMBINED_PAIRS:
+        if a in cpreds and b in cpreds:
+            clean = cpreds[a]["clean"].tolist()
+            mean, lo, hi = bootstrap_diff(cpreds[a]["pred"].tolist(), cpreds[b]["pred"].tolist(), clean, rng, COMBINED_BOOT)
+            data["pairs_combined"].append({"a": a, "b": b, "mean": mean, "lo": lo, "hi": hi, "n": len(clean)})
+
     ref = next(iter(preds.values()))
     for i in range(min(SHOW_EXAMPLES, len(ref))):
         row = {"noisy": ref.noisy[i], "clean": ref.clean[i]}
@@ -106,6 +121,9 @@ def main():
     lines += ["", "Paired bootstrap on CER (seed 42, negative favours the first system):", ""]
     for p in data["pairs"]:
         lines.append(f"- {p['a']} - {p['b']}: {p['mean']:+.2f} (95% CI {p['lo']:+.2f} to {p['hi']:+.2f})")
+    lines += ["", "Same comparisons on the combined test set (seed 42, negative favours the first system):", ""]
+    for p in data["pairs_combined"]:
+        lines.append(f"- {p['a']} - {p['b']}: {p['mean']:+.2f} (95% CI {p['lo']:+.2f} to {p['hi']:+.2f}, n={p['n']})")
     (RES_DIR / "seeds_summary.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
 
