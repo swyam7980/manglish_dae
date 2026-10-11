@@ -1,0 +1,7 @@
+{
+  "CER": 8.431,
+  "WER": 30.058,
+  "BLEU": 41.888,
+  "chrF": 83.032,
+  "empty_predictions": 0
+}

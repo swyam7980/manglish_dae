@@ -1,0 +1,144 @@
+{
+  "base_manglish_audit_unchanged": {
+    "sentences": 3259,
+    "would_drop": 3,
+    "by_reason": {
+      "elongated_letters": 3
+    }
+  },
+  "base_train": 2934,
+  "extra_added": 15614,
+  "train_total": 18548,
+  "test_total": 2059,
+  "per_source": {
+    "sellai_mixed-code": {
+      "input_lines": 9043,
+      "pieces": 9043,
+      "kept_unique": 8861,
+      "rejected_by_reason": {
+        "duplicate": 146,
+        "elongated_letters": 22,
+        "too_long": 14
+      },
+      "examples": {
+        "too_long": [
+          "university collegile indoor volleyball stadiathil nadakkunna university level championshipil partici",
+          "bengaluru kempegowda international airportil international travelersnte verification process cheyyun",
+          "ahmedabad narendra modi stadiyathil nadakkunna india versus australia icc world cup 2023 match galla",
+          "mumbai international airportil international travelersnte verification process cheyyunna immigration",
+          "chennai chidambaram stadiyathil nadakkunna england vs netherlands icc world cup 2023 match gallaryil"
+        ],
+        "elongated_letters": [
+          "iiit kottayam campusile maramkondulla bench",
+          "beachil sunset timil nadakkunna yoga sesssion attend cheyyunna person",
+          "olx accountile iphone 14 productnte description vaaayikkunna person",
+          "olx accountile apple smartwatchnte description vaaayikkunna person",
+          "varkala beachil sunset timil nadakkunna yoga sesssion"
+        ]
+      },
+      "dropped_val_overlap": 0,
+      "dropped_duplicates": 0,
+      "train_added": 7975,
+      "held_out": 886
+    },
+    "dakshina_ml": {
+      "input_lines": 10000,
+      "pieces": 11359,
+      "kept_unique": 8487,
+      "rejected_by_reason": {
+        "too_long": 1880,
+        "too_few_words": 529,
+        "trailing_initial": 301,
+        "initials_heavy": 104,
+        "duplicate": 20,
+        "elongated_letters": 18,
+        "too_short": 8,
+        "empty": 5,
+        "non_latin_script": 3,
+        "digit_heavy": 2,
+        "gibberish_token": 1,
+        "no_letters": 1
+      },
+      "examples": {
+        "trailing_initial": [
+          "payyannoorile kandoth kshethratthinu munnil a",
+          "great movie entetainment banneril shyam jayan, l",
+          "francis newton souza, s",
+          "trade union adisthanathilulla pravarthanathe n",
+          "kaashi enna disk kaashi samvidhaanam mechapeduthy n"
+        ],
+        "too_few_words": [
+          "lavender",
+          "coffeescript",
+          "paranpuvattan",
+          "channamodan",
+          "baalapriya"
+        ],
+        "too_long": [
+          "laabhechayodukoodi oohakachavadathil erppedunnatho palisha labhikkaathavannam panam niyamarahithamaa",
+          "orikkal viraku shekharikaan poya sathyavaane vanathilvechu saavithri kaanukayum parichayappedukayum ",
+          "palesteinum egyptum adakkam madhyadharanikkadalinte kizhakkan theerathake greek bhashayudeyum samskk",
+          "keralathile jalaashayangalil oru adhinivesha jeeviyaayi kaanappedunna iva pala thanathu jeevi vargan",
+          "ithinakam kozhsikkayude janaprathinidhiyaayi naashanal kanvenshanilekku saalisetti enna puthiyoru ne"
+        ],
+        "elongated_letters": [
+          "jamaaathe islaami keralayude pravarthanangalude kendhramaanu kozhikkottu sthithicheyunna hiraa senta",
+          "bharichirunna rasikan rajavu (merrry monarch) ennariyapettirunna",
+          "sasyajaalangal thudangiyavayudeyellaam chithreekaranam ee mekhalakku keezhil varunnathaaanu",
+          "paalakkaadu viktoriya kolejil nnnum sassyashaasthrathil birudham nedi",
+          "pradhaanamandhri devid kaamaroon maathramaaayirunnu inganeyoru dauthyatheppatti arinjirunnathu"
+        ],
+        "initials_heavy": [
+          "a (onezhs) karasthamaakki",
+          "o.v.vijayante gurusagaram",
+          "yuvadheepthi k.c.y.m. kothamangalam roopatha",
+          "keralathile samskritha pandithananu n.v.p. unithiri (n.v. padmanabhan unithiri)",
+          "c rod kadannupokunnu"
+        ],
+        "non_latin_script": [
+          "october 9 - 2008-le sahithyathinulla nobelsammanathinu french novelist jean marie gustave le cl\u00e9zio ",
+          "thamasiyathe abhyantharavakuppu manthriyayi nepoliyante ilayasahodaran louisine chumathalayettu.\u0d67",
+          "\u2022goal kamal ranjjith"
+        ],
+        "empty": [
+          "ee kuttikalude unnamanathinayi evar Chinese Womens National War Relief Society (Chinese Deshiya Yudh",
+          "bakteeriyolajiyil aakatte judeeshyal kammeeshan niraakaricha baakteeriyakalude naamathe aanu nomen d",
+          "1765-il dhivaan padhavi anuvadhichu kittiyathumuthalulla kambaniyude ethaandu ambathu kollathe prava",
+          "ee kuttikalude unnamanathinayi evar Chinese Womens National War Relief Society (Chinese Deshiya Yudh",
+          "2009 June 10 nu Libiyan nethavu Muammar Khadhafi Italyile thante adyasandarsanathil Romilethi avidut"
+        ],
+        "too_short": [
+          "g",
+          "w",
+          "1",
+          "w",
+          "17"
+        ],
+        "digit_heavy": [
+          "pinneed 1177il",
+          "1922 il robert j"
+        ],
+        "gibberish_token": [
+          "yeshuvinte suvisheshaprakhoshanakaalakhattam snaapakayohannaante prakhoshanakaalakhattathinusheshama"
+        ],
+        "no_letters": [
+          "1964"
+        ]
+      },
+      "dropped_val_overlap": 0,
+      "dropped_duplicates": 0,
+      "train_added": 7639,
+      "held_out": 848
+    }
+  },
+  "train_rows_by_source": {
+    "sellai_mixed-code": 7975,
+    "dakshina_ml": 7639,
+    "sellai_manglish": 2934
+  },
+  "test_rows_by_source": {
+    "sellai_mixed-code": 886,
+    "dakshina_ml": 848,
+    "sellai_manglish": 325
+  }
+}

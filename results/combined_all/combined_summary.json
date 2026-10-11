@@ -1,0 +1,794 @@
+[
+ {
+  "system": "byt5",
+  "source": "ALL",
+  "seeds": 5,
+  "n": 2059,
+  "CER": {
+   "mean": 14.762199999999998,
+   "sd": 1.858639475530421
+  },
+  "WER": {
+   "mean": 39.342200000000005,
+   "sd": 2.07266427575717
+  },
+  "BLEU": {
+   "mean": 38.247400000000006,
+   "sd": 1.7876120384468226
+  },
+  "chrF": {
+   "mean": 80.0,
+   "sd": 1.5514917015569212
+  }
+ },
+ {
+  "system": "byt5",
+  "source": "dakshina_ml",
+  "seeds": 5,
+  "n": 848,
+  "CER": {
+   "mean": 19.762999999999998,
+   "sd": 1.8288552430413951
+  },
+  "WER": {
+   "mean": 54.06080000000001,
+   "sd": 1.7439153362477224
+  },
+  "BLEU": {
+   "mean": 25.1284,
+   "sd": 1.2396325261947585
+  },
+  "chrF": {
+   "mean": 74.792,
+   "sd": 1.4425681959616317
+  }
+ },
+ {
+  "system": "byt5",
+  "source": "sellai_manglish",
+  "seeds": 5,
+  "n": 325,
+  "CER": {
+   "mean": 6.5792,
+   "sd": 1.6294464397457193
+  },
+  "WER": {
+   "mean": 23.07,
+   "sd": 2.3904923133112144
+  },
+  "BLEU": {
+   "mean": 56.7638,
+   "sd": 2.4620111088295262
+  },
+  "chrF": {
+   "mean": 88.3498,
+   "sd": 1.5206627502506924
+  }
+ },
+ {
+  "system": "byt5",
+  "source": "sellai_mixed-code",
+  "seeds": 5,
+  "n": 886,
+  "CER": {
+   "mean": 9.9746,
+   "sd": 2.193207536919386
+  },
+  "WER": {
+   "mean": 28.757600000000004,
+   "sd": 2.5179110985100337
+  },
+  "BLEU": {
+   "mean": 48.3266,
+   "sd": 2.3564810205049396
+  },
+  "chrF": {
+   "mean": 85.3262,
+   "sd": 1.9539783008007028
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "source": "ALL",
+  "seeds": 1,
+  "n": 2059,
+  "CER": {
+   "mean": 3.545,
+   "sd": null
+  },
+  "WER": {
+   "mean": 22.005,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 57.44,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 91.387,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "source": "dakshina_ml",
+  "seeds": 1,
+  "n": 848,
+  "CER": {
+   "mean": 4.719,
+   "sd": null
+  },
+  "WER": {
+   "mean": 32.115,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 44.425,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 89.319,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "source": "sellai_manglish",
+  "seeds": 1,
+  "n": 325,
+  "CER": {
+   "mean": 2.374,
+   "sd": null
+  },
+  "WER": {
+   "mean": 14.13,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 69.093,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 93.314,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "source": "sellai_mixed-code",
+  "seeds": 1,
+  "n": 886,
+  "CER": {
+   "mean": 2.235,
+   "sd": null
+  },
+  "WER": {
+   "mean": 13.816,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 69.544,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 93.898,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "source": "ALL",
+  "seeds": 1,
+  "n": 2059,
+  "CER": {
+   "mean": 21.559,
+   "sd": null
+  },
+  "WER": {
+   "mean": 67.186,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 8.103,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 75.027,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "source": "dakshina_ml",
+  "seeds": 1,
+  "n": 848,
+  "CER": {
+   "mean": 21.403,
+   "sd": null
+  },
+  "WER": {
+   "mean": 71.053,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 8.603,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 75.429,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "source": "sellai_manglish",
+  "seeds": 1,
+  "n": 325,
+  "CER": {
+   "mean": 21.116,
+   "sd": null
+  },
+  "WER": {
+   "mean": 60.051,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 10.344,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 74.908,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "source": "sellai_mixed-code",
+  "seeds": 1,
+  "n": 886,
+  "CER": {
+   "mean": 21.881,
+   "sd": null
+  },
+  "WER": {
+   "mean": 65.201,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 6.855,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 74.48,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart",
+  "source": "ALL",
+  "seeds": 5,
+  "n": 2059,
+  "CER": {
+   "mean": 14.967400000000001,
+   "sd": 0.06456237294275978
+  },
+  "WER": {
+   "mean": 51.8106,
+   "sd": 0.21243657877117136
+  },
+  "BLEU": {
+   "mean": 21.9928,
+   "sd": 0.29589221010361166
+  },
+  "chrF": {
+   "mean": 71.521,
+   "sd": 0.1796037304735053
+  }
+ },
+ {
+  "system": "mbart",
+  "source": "dakshina_ml",
+  "seeds": 5,
+  "n": 848,
+  "CER": {
+   "mean": 17.1332,
+   "sd": 0.0731382252997701
+  },
+  "WER": {
+   "mean": 70.2942,
+   "sd": 0.3266124614891451
+  },
+  "BLEU": {
+   "mean": 8.664399999999999,
+   "sd": 0.2903210292073243
+  },
+  "chrF": {
+   "mean": 66.924,
+   "sd": 0.3278780261011708
+  }
+ },
+ {
+  "system": "mbart",
+  "source": "sellai_manglish",
+  "seeds": 5,
+  "n": 325,
+  "CER": {
+   "mean": 7.9138,
+   "sd": 0.22513929021830015
+  },
+  "WER": {
+   "mean": 25.022600000000004,
+   "sd": 0.32317688654976556
+  },
+  "BLEU": {
+   "mean": 51.6792,
+   "sd": 0.5356236551908454
+  },
+  "chrF": {
+   "mean": 84.402,
+   "sd": 0.3674003266193392
+  }
+ },
+ {
+  "system": "mbart",
+  "source": "sellai_mixed-code",
+  "seeds": 5,
+  "n": 886,
+  "CER": {
+   "mean": 13.769200000000001,
+   "sd": 0.17734204239265972
+  },
+  "WER": {
+   "mean": 40.286,
+   "sd": 0.5467892647080762
+  },
+  "BLEU": {
+   "mean": 29.02,
+   "sd": 0.8752099748060463
+  },
+  "chrF": {
+   "mean": 75.0844,
+   "sd": 0.31548977796435446
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "source": "ALL",
+  "seeds": 1,
+  "n": 2059,
+  "CER": {
+   "mean": 5.955,
+   "sd": null
+  },
+  "WER": {
+   "mean": 28.666,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 49.368,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 86.777,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "source": "dakshina_ml",
+  "seeds": 1,
+  "n": 848,
+  "CER": {
+   "mean": 7.9,
+   "sd": null
+  },
+  "WER": {
+   "mean": 47.537,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 24.545,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 82.173,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "source": "sellai_manglish",
+  "seeds": 1,
+  "n": 325,
+  "CER": {
+   "mean": 5.064,
+   "sd": null
+  },
+  "WER": {
+   "mean": 16.506,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 65.674,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 89.522,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "source": "sellai_mixed-code",
+  "seeds": 1,
+  "n": 886,
+  "CER": {
+   "mean": 3.521,
+   "sd": null
+  },
+  "WER": {
+   "mean": 12.672,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 72.397,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 92.745,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "source": "ALL",
+  "seeds": 3,
+  "n": 2059,
+  "CER": {
+   "mean": 26.831,
+   "sd": 2.166199667620693
+  },
+  "WER": {
+   "mean": 60.089,
+   "sd": 1.4965062646043295
+  },
+  "BLEU": {
+   "mean": 17.924666666666667,
+   "sd": 0.6515230873371508
+  },
+  "chrF": {
+   "mean": 65.94500000000001,
+   "sd": 0.9075852577030953
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "source": "dakshina_ml",
+  "seeds": 3,
+  "n": 848,
+  "CER": {
+   "mean": 35.49866666666666,
+   "sd": 3.893882424179412
+  },
+  "WER": {
+   "mean": 79.472,
+   "sd": 3.3066906417141575
+  },
+  "BLEU": {
+   "mean": 9.077666666666667,
+   "sd": 0.22661935780804995
+  },
+  "chrF": {
+   "mean": 60.02033333333333,
+   "sd": 1.5753559386162008
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "source": "sellai_manglish",
+  "seeds": 3,
+  "n": 325,
+  "CER": {
+   "mean": 10.019,
+   "sd": 0.4715707794170452
+  },
+  "WER": {
+   "mean": 30.400333333333336,
+   "sd": 1.4149312115199573
+  },
+  "BLEU": {
+   "mean": 42.190999999999995,
+   "sd": 2.3973093250559057
+  },
+  "chrF": {
+   "mean": 82.07366666666667,
+   "sd": 0.8043794709795455
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "source": "sellai_mixed-code",
+  "seeds": 3,
+  "n": 886,
+  "CER": {
+   "mean": 19.188,
+   "sd": 0.30799999999999933
+  },
+  "WER": {
+   "mean": 48.448,
+   "sd": 0.3342648650396869
+  },
+  "BLEU": {
+   "mean": 21.800666666666668,
+   "sd": 0.6786076431439102
+  },
+  "chrF": {
+   "mean": 70.53166666666668,
+   "sd": 0.13521217893863577
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "source": "ALL",
+  "seeds": 1,
+  "n": 2059,
+  "CER": {
+   "mean": 6.434,
+   "sd": null
+  },
+  "WER": {
+   "mean": 30.139,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 46.124,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 86.169,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "source": "dakshina_ml",
+  "seeds": 1,
+  "n": 848,
+  "CER": {
+   "mean": 7.395,
+   "sd": null
+  },
+  "WER": {
+   "mean": 46.092,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 26.212,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 83.246,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "source": "sellai_manglish",
+  "seeds": 1,
+  "n": 325,
+  "CER": {
+   "mean": 6.189,
+   "sd": null
+  },
+  "WER": {
+   "mean": 20.231,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 58.001,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 87.687,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "source": "sellai_mixed-code",
+  "seeds": 1,
+  "n": 886,
+  "CER": {
+   "mean": 5.183,
+   "sd": null
+  },
+  "WER": {
+   "mean": 16.515,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 65.198,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 90.029,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "source": "ALL",
+  "seeds": 1,
+  "n": 2059,
+  "CER": {
+   "mean": 10.025,
+   "sd": null
+  },
+  "WER": {
+   "mean": 41.638,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 31.248,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 81.376,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "source": "dakshina_ml",
+  "seeds": 1,
+  "n": 848,
+  "CER": {
+   "mean": 9.544,
+   "sd": null
+  },
+  "WER": {
+   "mean": 54.534,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 19.891,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 80.017,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "source": "sellai_manglish",
+  "seeds": 1,
+  "n": 325,
+  "CER": {
+   "mean": 8.422,
+   "sd": null
+  },
+  "WER": {
+   "mean": 30.058,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 41.888,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 83.03,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "source": "sellai_mixed-code",
+  "seeds": 1,
+  "n": 886,
+  "CER": {
+   "mean": 11.082,
+   "sd": null
+  },
+  "WER": {
+   "mean": 31.618,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 41.221,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 82.963,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "source": "ALL",
+  "seeds": 1,
+  "n": 2059,
+  "CER": {
+   "mean": 10.975,
+   "sd": null
+  },
+  "WER": {
+   "mean": 63.146,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 10.238,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 77.979,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "source": "dakshina_ml",
+  "seeds": 1,
+  "n": 848,
+  "CER": {
+   "mean": 10.89,
+   "sd": null
+  },
+  "WER": {
+   "mean": 67.206,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 10.512,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 78.348,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "source": "sellai_manglish",
+  "seeds": 1,
+  "n": 325,
+  "CER": {
+   "mean": 10.743,
+   "sd": null
+  },
+  "WER": {
+   "mean": 55.62,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 11.79,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 78.105,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "source": "sellai_mixed-code",
+  "seeds": 1,
+  "n": 886,
+  "CER": {
+   "mean": 11.15,
+   "sd": null
+  },
+  "WER": {
+   "mean": 61.072,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 9.428,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 77.42,
+   "sd": null
+  }
+ }
+]
