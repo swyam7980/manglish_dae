@@ -15,7 +15,8 @@ HEAD = r"""<title>Manglish DAE Results</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Light theme uses the palette of the reference landing page: near-black text, white and light-grey surfaces, orange-red
-   accent with a lighter orange for gradients. Dark theme is unchanged.
+   accent with a lighter orange for gradients. Light is the default whatever the device setting; dark appears only when
+   chosen with the theme button, and the choice is remembered in the browser.
    Layout: a sticky menu, then a headline strip and the recommendation before any evidence; evidence sections follow
    in the order a reviewer asks for them, on a wide grid so charts and tables fit without sideways scrolling.
    Colour: one hue per model reused everywhere (light theme: orange for ByT5, charcoal for mBART-50, blue for mT5), baselines in grey.
@@ -27,10 +28,6 @@ HEAD = r"""<title>Manglish DAE Results</title>
   --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e1218; --surface: #161b23; --fg: #e8ebf1; --muted: #9aa5b6; --line: #2a303b; --soft: #1e2430;
-  --mbart: #7b9cff; --byt5: #3cc9ad; --mt5: #e3a23c; --base: #7f8a9c; --bad: #ef7a6d; --good: #3cc9ad;
-  --accent: #7b9cff; --accent2: #3cc9ad; --on-accent: #0e1218; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0e1218; --surface: #161b23; --fg: #e8ebf1; --muted: #9aa5b6; --line: #2a303b; --soft: #1e2430;
   --mbart: #7b9cff; --byt5: #3cc9ad; --mt5: #e3a23c; --base: #7f8a9c; --bad: #ef7a6d; --good: #3cc9ad;
@@ -115,7 +112,8 @@ footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line);
 </style>
 """
 
-BODY = r"""<header class="bar"><div class="bar-in">
+BODY = r"""<script>try { const t = localStorage.getItem("manglish-theme"); if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); } catch (e) {}</script>
+<header class="bar"><div class="bar-in">
   <a class="brand" href="#top">Manglish DAE</a>
   <nav id="nav" aria-label="Sections"></nav>
   <button class="themebtn" id="themebtn" type="button" aria-label="Switch colour theme">theme</button>
@@ -573,9 +571,10 @@ renderCharts(); renderNav();
 let resizeTimer = null;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderCharts, 150); });
 el('themebtn').onclick = () => {
-  const r = document.documentElement, cur = r.getAttribute('data-theme');
-  const dark = cur ? cur === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-  r.setAttribute('data-theme', dark ? 'light' : 'dark');
+  const r = document.documentElement;
+  const next = r.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  r.setAttribute('data-theme', next);
+  try { localStorage.setItem('manglish-theme', next); } catch (e) {}
 };
 </script>
 """
