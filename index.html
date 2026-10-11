@@ -7,36 +7,42 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a sticky menu, then a headline strip and the recommendation before any evidence; evidence sections follow
+/* Light theme uses the palette of the reference landing page: near-black text, white and light-grey surfaces, orange-red
+   accent with a lighter orange for gradients. Dark theme is unchanged.
+   Layout: a sticky menu, then a headline strip and the recommendation before any evidence; evidence sections follow
    in the order a reviewer asks for them, on a wide grid so charts and tables fit without sideways scrolling.
-   Colour: cool slate neutrals; one hue per model (blue, teal, amber) reused everywhere, baselines in grey.
+   Colour: one hue per model reused everywhere (light theme: orange for ByT5, charcoal for mBART-50, blue for mT5), baselines in grey.
    Type: Instrument Sans for reading, JetBrains Mono for labels and figures. */
 :root {
-  --bg: #f4f6f9; --surface: #ffffff; --fg: #121821; --muted: #566274; --line: #dbe0e8; --soft: #eceff5;
-  --mbart: #2b57d4; --byt5: #0a8671; --mt5: #bb7210; --base: #7b8696; --bad: #c0392b; --good: #0a8671;
+  --bg: #f3f3f3; --surface: #ffffff; --fg: #131313; --muted: #5c5c5c; --line: #dcdcdc; --soft: #ebebeb;
+  --mbart: #2a2a2a; --byt5: #ff3f02; --mt5: #2b57d4; --base: #9a9a9a; --bad: #b3261e; --good: #0a8671;
+  --accent: #ff3f02; --accent2: #ff8b3d; --on-accent: #ffffff;
   --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0e1218; --surface: #161b23; --fg: #e8ebf1; --muted: #9aa5b6; --line: #2a303b; --soft: #1e2430;
-  --mbart: #7b9cff; --byt5: #3cc9ad; --mt5: #e3a23c; --base: #7f8a9c; --bad: #ef7a6d; --good: #3cc9ad; color-scheme: dark; } }
+  --mbart: #7b9cff; --byt5: #3cc9ad; --mt5: #e3a23c; --base: #7f8a9c; --bad: #ef7a6d; --good: #3cc9ad;
+  --accent: #7b9cff; --accent2: #3cc9ad; --on-accent: #0e1218; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0e1218; --surface: #161b23; --fg: #e8ebf1; --muted: #9aa5b6; --line: #2a303b; --soft: #1e2430;
-  --mbart: #7b9cff; --byt5: #3cc9ad; --mt5: #e3a23c; --base: #7f8a9c; --bad: #ef7a6d; --good: #3cc9ad; color-scheme: dark; }
+  --mbart: #7b9cff; --byt5: #3cc9ad; --mt5: #e3a23c; --base: #7f8a9c; --bad: #ef7a6d; --good: #3cc9ad;
+  --accent: #7b9cff; --accent2: #3cc9ad; --on-accent: #0e1218; color-scheme: dark; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.55; margin: 0; }
 a { color: inherit; text-decoration-color: var(--base); text-underline-offset: 3px; }
-a:hover { text-decoration-color: var(--fg); }
+a:hover { text-decoration-color: var(--accent); }
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
 .bar-in { max-width: 1360px; margin-inline: auto; padding-inline: clamp(16px, 3vw, 40px); display: flex; align-items: center; gap: 16px; min-height: 52px; }
 .brand { font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; text-decoration: none; }
+.brand::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--accent); margin-right: 9px; }
 nav { display: flex; gap: 0; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
 nav::-webkit-scrollbar { display: none; }
 nav a { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); text-decoration: none; padding: 6px 7px; border-radius: 5px; white-space: nowrap; }
 nav a:hover, nav a:focus-visible { color: var(--fg); background: var(--soft); }
 .themebtn { font: inherit; font-family: var(--mono); font-size: 0.74rem; color: var(--muted); background: none; border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer; white-space: nowrap; }
-button:focus-visible, a:focus-visible { outline: 2px solid var(--mbart); outline-offset: 2px; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .wrap { max-width: 1360px; margin-inline: auto; padding-inline: clamp(16px, 3vw, 40px); padding-block: 0 88px; }
 .hero { padding-block: 56px 8px; }
 h1 { font-size: clamp(2rem, 4.2vw, 3.3rem); line-height: 1.08; font-weight: 600; letter-spacing: -0.028em; margin: 0 0 18px; max-width: 24ch; text-wrap: balance; }
@@ -78,7 +84,7 @@ td.cell { position: relative; min-width: 130px; }
 .v { position: relative; }
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
 .tabs button { font: inherit; font-size: 0.82rem; font-family: var(--mono); color: var(--fg); background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
-.tabs button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.tabs button[aria-pressed="true"] { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: var(--on-accent); border-color: transparent; }
 svg { display: block; width: 100%; height: auto; }
 svg text { font-family: var(--mono); font-size: 11.5px; fill: var(--muted); }
 svg .lab { font-family: var(--sans); font-size: 13px; fill: var(--fg); }
