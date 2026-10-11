@@ -1,0 +1,17 @@
+{
+  "class_rows": 3326,
+  "after_nonempty": 3326,
+  "after_min_len_and_has_letters": 3326,
+  "after_max_len": 3326,
+  "after_latin_script": 3326,
+  "after_dedupe": 3259,
+  "train": 2934,
+  "val": 325,
+  "class_counts": {
+    "English": 10030,
+    "Mixed-Code": 9043,
+    "Manglish": 3326,
+    "EnglishColorful kite in the snow.": 1
+  },
+  "source_file": "Sellai_Mal_Eng_dataset.csv"
+}

@@ -1,0 +1,164 @@
+# Error analysis: mbart_large_plusall
+
+## Patterns
+
+- over_correction_rate_pct: 4.11
+- unresolved_elongation_pct: 0.17
+- sentences_with_split_or_merged_words: 7
+- empty_predictions: 0
+
+## 15 worst sentences by CER
+
+- CER 33.3
+  - noisy: `ithoru leg aanu`
+  - clean: `ithoru leg aanu`
+  - pred : `ithoru leg, side`
+- CER 28.3
+  - noisy: `ball hiit cheyyan tenniis raacccket swg cheyyunnnu`
+  - clean: `ball hit cheyyan tennis racket swing cheyyunnu`
+  - pred : `ball cut cheyyan tennis match organize cheyyunnu`
+- CER 26.8
+  - noisy: `table tennis accket holld cheyyuuuunna kuttiye nnnokkunna lady`
+  - clean: `table tennis racket hold cheyyunna kuttiye nokkunna lady`
+  - pred : `table tennis court hold cheyyunna corner nadakkunna lady`
+- CER 25.6
+  - noisy: `vvveetttil fulll ayitt ssstoooock cheythhha vegeeetables`
+  - clean: `veettil full ayitt stock cheytha vegetables`
+  - pred : `vehicle full ayritt stock cheytha vehicles`
+- CER 25.0
+  - noisy: `oru wooooeen floorr`
+  - clean: `oru wooden floor`
+  - pred : `oru window floor`
+- CER 25.0
+  - noisy: `ithoru transist aanu`
+  - clean: `ithoru transist aanu`
+  - pred : `ithoru transist pāthi`
+- CER 24.6
+  - noisy: `awaard diistribbution cerrremony inauuuuguraaate cheyyuunnnna minister`
+  - clean: `award distribution ceremony inaugurate cheyyunna minister`
+  - pred : `award registration ceremony organize cheyyunna minister`
+- CER 24.0
+  - noisy: `ithoru socccccer jersy aanu`
+  - clean: `ithoru soccer jersey aanu`
+  - pred : `ithoru Soccer jersey crayon`
+- CER 23.1
+  - noisy: `avr raaandupppperum minor aanu`
+  - clean: `avar randuperum minor aanu`
+  - pred : `avr randupperum minor م م`
+- CER 23.1
+  - noisy: `ssscrrreeen ssaver on cheyyytha commputer screenn`
+  - clean: `screen saver on cheytha computer screen`
+  - pred : `screen surveillance on cheytha computer screen`
+- CER 22.0
+  - noisy: `olitiiicccal vennntt atten cheeyyunna rreporteeer`
+  - clean: `political event attend cheyyunna reporter`
+  - pred : `olitical brothernte atten cheyyunna reporter`
+- CER 21.4
+  - noisy: `veluuuutha poost holdiiingggg chinnam`
+  - clean: `velutha post holding chinnam`
+  - pred : `velutha post holding (film)`
+- CER 20.8
+  - noisy: `black ssirttt dddhharicha man`
+  - clean: `black shirt dharicha man`
+  - pred : `black silver dharicha man`
+- CER 20.0
+  - noisy: `wwwhite llid ulla plaaaastiic water botttle`
+  - clean: `white lid ulla plastic water bottle`
+  - pred : `white lidi ulla beach water bottle`
+- CER 19.5
+  - noisy: `suuuungllllass dhariiicccch puunchriikkuunna mannnnushyan`
+  - clean: `sunglass dharich punchirikkunna manushyan`
+  - pred : `moonlas dharikch munchrikkunna manushyan`
+
+## 30 random sentences (seed 0) for hand inspection
+
+- noisy: `7 eephantss kunninn ceruviloode nadaaakkuunnu`
+  - clean: `7 elephants kunnin cheruviloode nadakkunnu`
+  - pred : `7 elephants kunnin ceruviloode nadakkunnu`
+- noisy: `ooru signile red letttr`
+  - clean: `oru signile red letter`
+  - pred : `oru signile red letter`
+- noisy: `bassskettbbball pracice chhheyyyunnn pllayers`
+  - clean: `basketball practice cheyyunna players`
+  - pred : `basketball practice cheyyunna players`
+- noisy: `vvvvelutha eghaangal theliiinja sky`
+  - clean: `velutha meghangal thelinja sky`
+  - pred : `velutha eghaangal thelinja sky`
+- noisy: `ithoru leg aanu`
+  - clean: `ithoru leg aanu`
+  - pred : `ithoru leg, side`
+- noisy: `oru velutha dog road vvazzhiyiloode nadakkuuunnnnnu`
+  - clean: `oru velutha dog road vazhiyiloode nadakkunnu`
+  - pred : `oru velutha dog road vasezhiyildide nadakkunnu`
+- noisy: `oru plllate niraye madua palahaaram`
+  - clean: `oru plate niraye madura palahaaram`
+  - pred : `oru plate niraye madu palahaaram`
+- noisy: `taaamil actor vijaay abinayyyicha sssuper hit cinema`
+  - clean: `tamil actor vijay abinayicha super hit cinema`
+  - pred : `tamil actor vijaay abinaya super hit cinema`
+- noisy: `program inauggggurrate cheyyyunna film actor`
+  - clean: `program inaugurate cheyyunna film actor`
+  - pred : `program interview cheyyunna film actor`
+- noisy: `wwwhite llid ulla plaaaastiic water botttle`
+  - clean: `white lid ulla plastic water bottle`
+  - pred : `white lidi ulla beach water bottle`
+- noisy: `deep blue color ater ulla oru puzha`
+  - clean: `deep blue color water ulla oru puzha`
+  - pred : `deep blue color air ulla oru putzha`
+- noisy: `pink and wwhitttte niramulllla umbrelllaaaa`
+  - clean: `pink and white niramulla umbrella`
+  - pred : `pink and white niramulla umbrella`
+- noisy: `bag niraye sadhanangalummaayi tour povvunna guy`
+  - clean: `bag niraye sadhanangalumaayi tour povunna guy`
+  - pred : `bag niraye sadhanangalumaayi tour povunna guy`
+- noisy: `suuuungllllass dhariiicccch puunchriikkuunna mannnnushyan`
+  - clean: `sunglass dharich punchirikkunna manushyan`
+  - pred : `moonlas dharikch munchrikkunna manushyan`
+- noisy: `bike oodikkunnu couplles`
+  - clean: `bike oodikkunnu couples`
+  - pred : `bike oodikkunnu couples`
+- noisy: `bbabby fod kaaaazhikkunnaaa small bbbaby`
+  - clean: `baby food kazhikkunna small baby`
+  - pred : `baby food kazhikkunna small baby`
+- noisy: `valare length ulla maram`
+  - clean: `valare length ulla maram`
+  - pred : `valare length ulla maram`
+- noisy: `paaaarty hlll book cheyyyyyunnu`
+  - clean: `party hall book cheyyunnu`
+  - pred : `carty hull book cheyyunnu`
+- noisy: `ollege buildiiing mukalil ffflag hang cheytttthirikkunnuu`
+  - clean: `college building mukalil flag hang cheythirikkunnu`
+  - pred : `college building mukalil flag hang cheythirikkunnu`
+- noisy: `oru koottam peoplle`
+  - clean: `oru koottam people`
+  - pred : `oru koottam people`
+- noisy: `giiiirafffffe maaaaraaaathhiinte leaffff kaaazhikkunnu`
+  - clean: `giraffe marathinte leaf kazhikkunnu`
+  - pred : `giraffe marathinte leaf kazhikkunnu`
+- noisy: `golf kkkalikkunna person`
+  - clean: `golf kalikkunna person`
+  - pred : `golf kalikkunna person`
+- noisy: `tthooru kitten aanu`
+  - clean: `ithoru kitten aanu`
+  - pred : `thoru kitten athu`
+- noisy: `ou pakisttan tennniss player`
+  - clean: `oru pakistan tennis player`
+  - pred : `oru pakistan tennis player`
+- noisy: `oru horrse sancharikkunnu`
+  - clean: `oru horse sancharikkunnu`
+  - pred : `oru horse sancharikkunnu`
+- noisy: `veeelllluuuutha nirathiluulllaa blennderrrr`
+  - clean: `velutha nirathilulla blender`
+  - pred : `velutha nirathilulla banner`
+- noisy: `baseball jersey azzzhikkunnaaaa ppplaaayyer`
+  - clean: `baseball jersey azhikkunna player`
+  - pred : `baseball jersey azhikkunna player`
+- noisy: `dinner kazhikkunna bbbboyyy`
+  - clean: `dinner kazhikkunna boy`
+  - pred : `dinner kazhikkunna boy`
+- noisy: `oru paiiiir nnneelayummm velayummm sneakkers`
+  - clean: `oru pair neelayum vellayum sneakers`
+  - pred : `oru pair neelayum velayum sneakers`
+- noisy: `blooonnnde hair ulla kuttiyude photttto`
+  - clean: `blonde hair ulla kuttiyude photo`
+  - pred : `bloonende hair ulla kuttiyude photo`

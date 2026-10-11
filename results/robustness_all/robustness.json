@@ -1,0 +1,1136 @@
+[
+ {
+  "system": "byt5",
+  "condition": "base",
+  "seeds": 5,
+  "CER": {
+   "mean": 16.4834,
+   "sd": 1.7935256619295972
+  },
+  "WER": {
+   "mean": 42.0844,
+   "sd": 2.301299806631026
+  },
+  "BLEU": {
+   "mean": 34.7074,
+   "sd": 2.084947793111376
+  },
+  "chrF": {
+   "mean": 78.4838,
+   "sd": 1.556373252147442
+  }
+ },
+ {
+  "system": "byt5",
+  "condition": "extreme",
+  "seeds": 5,
+  "CER": {
+   "mean": 27.000199999999996,
+   "sd": 2.147475424772074
+  },
+  "WER": {
+   "mean": 64.1636,
+   "sd": 1.6799649698728831
+  },
+  "BLEU": {
+   "mean": 14.6938,
+   "sd": 1.2151659145976734
+  },
+  "chrF": {
+   "mean": 63.0594,
+   "sd": 1.7685705527346087
+  }
+ },
+ {
+  "system": "byt5",
+  "condition": "heavy",
+  "seeds": 5,
+  "CER": {
+   "mean": 20.843,
+   "sd": 1.7113110471214759
+  },
+  "WER": {
+   "mean": 53.7832,
+   "sd": 1.7553719548859164
+  },
+  "BLEU": {
+   "mean": 23.4634,
+   "sd": 1.3374231940563923
+  },
+  "chrF": {
+   "mean": 71.4902,
+   "sd": 1.3472418862253353
+  }
+ },
+ {
+  "system": "byt5",
+  "condition": "phonetic",
+  "seeds": 5,
+  "CER": {
+   "mean": 21.012999999999998,
+   "sd": 1.0828058459391512
+  },
+  "WER": {
+   "mean": 68.41599999999998,
+   "sd": 0.8060787802690252
+  },
+  "BLEU": {
+   "mean": 8.6832,
+   "sd": 0.3818830972954946
+  },
+  "chrF": {
+   "mean": 60.330200000000005,
+   "sd": 0.7325317057984606
+  }
+ },
+ {
+  "system": "byt5",
+  "condition": "phonetic_plus_base",
+  "seeds": 5,
+  "CER": {
+   "mean": 25.5028,
+   "sd": 1.294601560326574
+  },
+  "WER": {
+   "mean": 73.68440000000001,
+   "sd": 0.8986600024480919
+  },
+  "BLEU": {
+   "mean": 6.552199999999999,
+   "sd": 0.30421324757478935
+  },
+  "chrF": {
+   "mean": 55.4534,
+   "sd": 0.8355793199930204
+  }
+ },
+ {
+  "system": "byt5",
+  "condition": "vowel_drop",
+  "seeds": 5,
+  "CER": {
+   "mean": 32.594,
+   "sd": 1.5197935715089732
+  },
+  "WER": {
+   "mean": 87.5664,
+   "sd": 0.9276663193196133
+  },
+  "BLEU": {
+   "mean": 2.9513999999999996,
+   "sd": 0.18827187787877397
+  },
+  "chrF": {
+   "mean": 42.35000000000001,
+   "sd": 0.757302449487653
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "condition": "base",
+  "seeds": 1,
+  "CER": {
+   "mean": 3.791,
+   "sd": null
+  },
+  "WER": {
+   "mean": 22.85,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 55.579,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 91.006,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "condition": "extreme",
+  "seeds": 1,
+  "CER": {
+   "mean": 14.046,
+   "sd": null
+  },
+  "WER": {
+   "mean": 51.12,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 23.909,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 74.53,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "condition": "heavy",
+  "seeds": 1,
+  "CER": {
+   "mean": 8.314,
+   "sd": null
+  },
+  "WER": {
+   "mean": 37.936,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 37.01,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 83.144,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "condition": "phonetic",
+  "seeds": 1,
+  "CER": {
+   "mean": 17.745,
+   "sd": null
+  },
+  "WER": {
+   "mean": 65.946,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 10.759,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 62.655,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "condition": "phonetic_plus_base",
+  "seeds": 1,
+  "CER": {
+   "mean": 19.108,
+   "sd": null
+  },
+  "WER": {
+   "mean": 68.89,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 9.084,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 60.245,
+   "sd": null
+  }
+ },
+ {
+  "system": "byt5_plusall",
+  "condition": "vowel_drop",
+  "seeds": 1,
+  "CER": {
+   "mean": 18.244,
+   "sd": null
+  },
+  "WER": {
+   "mean": 76.733,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 5.308,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 52.647,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "condition": "base",
+  "seeds": 1,
+  "CER": {
+   "mean": 21.741,
+   "sd": null
+  },
+  "WER": {
+   "mean": 68.473,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 8.712,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 74.73,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "condition": "extreme",
+  "seeds": 1,
+  "CER": {
+   "mean": 61.07,
+   "sd": null
+  },
+  "WER": {
+   "mean": 95.727,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 1.001,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 46.268,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "condition": "heavy",
+  "seeds": 1,
+  "CER": {
+   "mean": 41.146,
+   "sd": null
+  },
+  "WER": {
+   "mean": 88.275,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 2.343,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 58.211,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "condition": "phonetic",
+  "seeds": 1,
+  "CER": {
+   "mean": 21.543,
+   "sd": null
+  },
+  "WER": {
+   "mean": 74.127,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 5.66,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 59.431,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "condition": "phonetic_plus_base",
+  "seeds": 1,
+  "CER": {
+   "mean": 42.762,
+   "sd": null
+  },
+  "WER": {
+   "mean": 88.327,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 1.919,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 48.739,
+   "sd": null
+  }
+ },
+ {
+  "system": "copy_input",
+  "condition": "vowel_drop",
+  "seeds": 1,
+  "CER": {
+   "mean": 17.125,
+   "sd": null
+  },
+  "WER": {
+   "mean": 81.683,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 3.746,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 49.597,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart",
+  "condition": "base",
+  "seeds": 5,
+  "CER": {
+   "mean": 14.8644,
+   "sd": 0.1593386331057225
+  },
+  "WER": {
+   "mean": 53.4654,
+   "sd": 0.3634292228206194
+  },
+  "BLEU": {
+   "mean": 20.6736,
+   "sd": 0.5129115908224342
+  },
+  "chrF": {
+   "mean": 71.1222,
+   "sd": 0.3286802397467773
+  }
+ },
+ {
+  "system": "mbart",
+  "condition": "extreme",
+  "seeds": 5,
+  "CER": {
+   "mean": 28.017599999999998,
+   "sd": 0.5057378767701701
+  },
+  "WER": {
+   "mean": 77.21220000000001,
+   "sd": 0.8614645668859524
+  },
+  "BLEU": {
+   "mean": 6.5968,
+   "sd": 0.5192260586680912
+  },
+  "chrF": {
+   "mean": 52.938,
+   "sd": 0.40257297475116277
+  }
+ },
+ {
+  "system": "mbart",
+  "condition": "heavy",
+  "seeds": 5,
+  "CER": {
+   "mean": 22.121000000000002,
+   "sd": 0.6166437383124875
+  },
+  "WER": {
+   "mean": 67.24860000000001,
+   "sd": 0.8191521836630846
+  },
+  "BLEU": {
+   "mean": 11.282399999999999,
+   "sd": 0.46560852655422924
+  },
+  "chrF": {
+   "mean": 60.897000000000006,
+   "sd": 0.20184523774416993
+  }
+ },
+ {
+  "system": "mbart",
+  "condition": "phonetic",
+  "seeds": 5,
+  "CER": {
+   "mean": 20.9586,
+   "sd": 0.2612294011017909
+  },
+  "WER": {
+   "mean": 64.96619999999999,
+   "sd": 0.07065550226274062
+  },
+  "BLEU": {
+   "mean": 13.7578,
+   "sd": 0.18310707250131017
+  },
+  "chrF": {
+   "mean": 60.032000000000004,
+   "sd": 0.2893233485220291
+  }
+ },
+ {
+  "system": "mbart",
+  "condition": "phonetic_plus_base",
+  "seeds": 5,
+  "CER": {
+   "mean": 26.878999999999998,
+   "sd": 0.2038810927967566
+  },
+  "WER": {
+   "mean": 74.0542,
+   "sd": 0.3954695942800139
+  },
+  "BLEU": {
+   "mean": 8.5576,
+   "sd": 0.32890241713918733
+  },
+  "chrF": {
+   "mean": 52.597,
+   "sd": 0.2564595484671986
+  }
+ },
+ {
+  "system": "mbart",
+  "condition": "vowel_drop",
+  "seeds": 5,
+  "CER": {
+   "mean": 30.5756,
+   "sd": 0.2234732646201787
+  },
+  "WER": {
+   "mean": 76.9934,
+   "sd": 0.17396637606158144
+  },
+  "BLEU": {
+   "mean": 5.8426,
+   "sd": 0.17687792400409966
+  },
+  "chrF": {
+   "mean": 44.516,
+   "sd": 0.1640060974476248
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "condition": "base",
+  "seeds": 1,
+  "CER": {
+   "mean": 5.873,
+   "sd": null
+  },
+  "WER": {
+   "mean": 29.781,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 48.513,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 86.76,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "condition": "extreme",
+  "seeds": 1,
+  "CER": {
+   "mean": 13.249,
+   "sd": null
+  },
+  "WER": {
+   "mean": 51.199,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 25.258,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 72.914,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "condition": "heavy",
+  "seeds": 1,
+  "CER": {
+   "mean": 9.68,
+   "sd": null
+  },
+  "WER": {
+   "mean": 41.975,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 34.797,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 79.493,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "condition": "phonetic",
+  "seeds": 1,
+  "CER": {
+   "mean": 14.893,
+   "sd": null
+  },
+  "WER": {
+   "mean": 52.084,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 27.765,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 69.199,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "condition": "phonetic_plus_base",
+  "seeds": 1,
+  "CER": {
+   "mean": 17.198,
+   "sd": null
+  },
+  "WER": {
+   "mean": 57.504,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 21.497,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 65.301,
+   "sd": null
+  }
+ },
+ {
+  "system": "mbart_plusall",
+  "condition": "vowel_drop",
+  "seeds": 1,
+  "CER": {
+   "mean": 19.469,
+   "sd": null
+  },
+  "WER": {
+   "mean": 61.907,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 17.42,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 58.296,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "condition": "base",
+  "seeds": 3,
+  "CER": {
+   "mean": 29.168333333333333,
+   "sd": 4.136251483328031
+  },
+  "WER": {
+   "mean": 62.96666666666666,
+   "sd": 3.4884269138586395
+  },
+  "BLEU": {
+   "mean": 16.643333333333334,
+   "sd": 0.6628011265329391
+  },
+  "chrF": {
+   "mean": 64.22666666666667,
+   "sd": 1.0260001624431319
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "condition": "extreme",
+  "seeds": 3,
+  "CER": {
+   "mean": 49.105333333333334,
+   "sd": 2.797856739244046
+  },
+  "WER": {
+   "mean": 88.91799999999999,
+   "sd": 3.7130091570046013
+  },
+  "BLEU": {
+   "mean": 3.1336666666666666,
+   "sd": 0.07756502648316026
+  },
+  "chrF": {
+   "mean": 39.849,
+   "sd": 1.3994631113394898
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "condition": "heavy",
+  "seeds": 3,
+  "CER": {
+   "mean": 38.454,
+   "sd": 0.9163356371985093
+  },
+  "WER": {
+   "mean": 77.66199999999999,
+   "sd": 1.0582707593050085
+  },
+  "BLEU": {
+   "mean": 7.015999999999999,
+   "sd": 0.6016834716028021
+  },
+  "chrF": {
+   "mean": 50.36033333333334,
+   "sd": 0.9095473233061204
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "condition": "phonetic",
+  "seeds": 3,
+  "CER": {
+   "mean": 30.37233333333333,
+   "sd": 2.088227557842615
+  },
+  "WER": {
+   "mean": 71.40866666666666,
+   "sd": 1.808179839875817
+  },
+  "BLEU": {
+   "mean": 10.165666666666667,
+   "sd": 0.6748706048816565
+  },
+  "chrF": {
+   "mean": 54.919999999999995,
+   "sd": 0.7222111879498977
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "condition": "phonetic_plus_base",
+  "seeds": 3,
+  "CER": {
+   "mean": 41.79366666666667,
+   "sd": 1.1645584284755048
+  },
+  "WER": {
+   "mean": 81.631,
+   "sd": 1.4675653307434071
+  },
+  "BLEU": {
+   "mean": 5.9173333333333344,
+   "sd": 0.6206885961038222
+  },
+  "chrF": {
+   "mean": 44.71833333333333,
+   "sd": 0.6224807895295508
+  }
+ },
+ {
+  "system": "mt5_lr1e-3",
+  "condition": "vowel_drop",
+  "seeds": 3,
+  "CER": {
+   "mean": 34.26333333333333,
+   "sd": 1.612441110035753
+  },
+  "WER": {
+   "mean": 81.56166666666667,
+   "sd": 0.9891543526332627
+  },
+  "BLEU": {
+   "mean": 5.125,
+   "sd": 0.37142428568956026
+  },
+  "chrF": {
+   "mean": 43.65833333333333,
+   "sd": 0.3013740754168023
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "condition": "base",
+  "seeds": 1,
+  "CER": {
+   "mean": 6.47,
+   "sd": null
+  },
+  "WER": {
+   "mean": 30.902,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 45.054,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 86.073,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "condition": "extreme",
+  "seeds": 1,
+  "CER": {
+   "mean": 14.865,
+   "sd": null
+  },
+  "WER": {
+   "mean": 55.758,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 20.32,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 70.375,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "condition": "heavy",
+  "seeds": 1,
+  "CER": {
+   "mean": 11.108,
+   "sd": null
+  },
+  "WER": {
+   "mean": 46.326,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 27.965,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 77.209,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "condition": "phonetic",
+  "seeds": 1,
+  "CER": {
+   "mean": 15.717,
+   "sd": null
+  },
+  "WER": {
+   "mean": 54.742,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 24.032,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 67.659,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "condition": "phonetic_plus_base",
+  "seeds": 1,
+  "CER": {
+   "mean": 18.828,
+   "sd": null
+  },
+  "WER": {
+   "mean": 60.344,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 18.564,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 63.082,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_lr1e-3_plusall",
+  "condition": "vowel_drop",
+  "seeds": 1,
+  "CER": {
+   "mean": 19.519,
+   "sd": null
+  },
+  "WER": {
+   "mean": 65.138,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 14.125,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 56.916,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "condition": "base",
+  "seeds": 1,
+  "CER": {
+   "mean": 10.622,
+   "sd": null
+  },
+  "WER": {
+   "mean": 42.991,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 29.957,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 81.297,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "condition": "extreme",
+  "seeds": 1,
+  "CER": {
+   "mean": 23.701,
+   "sd": null
+  },
+  "WER": {
+   "mean": 74.336,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 6.654,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 60.777,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "condition": "heavy",
+  "seeds": 1,
+  "CER": {
+   "mean": 15.07,
+   "sd": null
+  },
+  "WER": {
+   "mean": 60.344,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 14.718,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 70.412,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "condition": "phonetic",
+  "seeds": 1,
+  "CER": {
+   "mean": 17.656,
+   "sd": null
+  },
+  "WER": {
+   "mean": 61.985,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 15.351,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 64.024,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "condition": "phonetic_plus_base",
+  "seeds": 1,
+  "CER": {
+   "mean": 22.596,
+   "sd": null
+  },
+  "WER": {
+   "mean": 70.505,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 9.133,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 57.168,
+   "sd": null
+  }
+ },
+ {
+  "system": "mt5_plusall",
+  "condition": "vowel_drop",
+  "seeds": 1,
+  "CER": {
+   "mean": 23.834,
+   "sd": null
+  },
+  "WER": {
+   "mean": 75.586,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 7.326,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 50.918,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "condition": "base",
+  "seeds": 1,
+  "CER": {
+   "mean": 11.199,
+   "sd": null
+  },
+  "WER": {
+   "mean": 64.33,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 10.895,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 77.702,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "condition": "extreme",
+  "seeds": 1,
+  "CER": {
+   "mean": 30.652,
+   "sd": null
+  },
+  "WER": {
+   "mean": 93.825,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 1.195,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 51.1,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "condition": "heavy",
+  "seeds": 1,
+  "CER": {
+   "mean": 20.927,
+   "sd": null
+  },
+  "WER": {
+   "mean": 85.201,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 2.843,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 62.423,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "condition": "phonetic",
+  "seeds": 1,
+  "CER": {
+   "mean": 20.985,
+   "sd": null
+  },
+  "WER": {
+   "mean": 73.424,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 6.035,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 59.757,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "condition": "phonetic_plus_base",
+  "seeds": 1,
+  "CER": {
+   "mean": 28.511,
+   "sd": null
+  },
+  "WER": {
+   "mean": 87.103,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 2.077,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 50.804,
+   "sd": null
+  }
+ },
+ {
+  "system": "rule_collapse_runs",
+  "condition": "vowel_drop",
+  "seeds": 1,
+  "CER": {
+   "mean": 17.311,
+   "sd": null
+  },
+  "WER": {
+   "mean": 81.683,
+   "sd": null
+  },
+  "BLEU": {
+   "mean": 3.746,
+   "sd": null
+  },
+  "chrF": {
+   "mean": 49.585,
+   "sd": null
+  }
+ }
+]
