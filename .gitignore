@@ -9,3 +9,4 @@ outputs/
 results/smoke/
 *.log
 report/fragment.html
+results/*/preds_*_greedy.csv

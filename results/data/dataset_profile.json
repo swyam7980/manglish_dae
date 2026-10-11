@@ -1,0 +1,66 @@
+{
+ "datasets": [
+  {
+   "name": "SeLLaI Mal-Eng, Manglish class",
+   "provider": "Mendeley Data (SeLLaI Mal-Eng, 2024)",
+   "licence": "CC BY 4.0",
+   "url": "https://data.mendeley.com/datasets/5p4zbpy8wz/1",
+   "register": "image captions, Latin-script Malayalam-English",
+   "raw_key": "Manglish",
+   "key": "sellai_manglish",
+   "raw_rows": 3326,
+   "clean_rows": 3259,
+   "train": 2934,
+   "test": 325,
+   "avg_chars": 34.3,
+   "avg_words": 4.7,
+   "total_chars": 111904
+  },
+  {
+   "name": "SeLLaI Mal-Eng, Mixed-Code class",
+   "provider": "Mendeley Data (same file as above)",
+   "licence": "CC BY 4.0",
+   "url": "https://data.mendeley.com/datasets/5p4zbpy8wz/1",
+   "register": "longer image captions, more Malayalam and more English mixed in",
+   "raw_key": "Mixed-Code",
+   "key": "sellai_mixed-code",
+   "raw_rows": 9043,
+   "clean_rows": 8861,
+   "train": 7975,
+   "test": 886,
+   "avg_chars": 51.7,
+   "avg_words": 6.3,
+   "total_chars": 458446
+  },
+  {
+   "name": "Dakshina, Malayalam romanised sentences",
+   "provider": "Google Research (Roark et al., 2020)",
+   "licence": "CC BY-SA 4.0",
+   "url": "https://github.com/google-research-datasets/dakshina",
+   "register": "formal Wikipedia sentences romanised by hand, no English mixing",
+   "raw_key": null,
+   "key": "dakshina_ml",
+   "raw_rows": 10000,
+   "clean_rows": 8487,
+   "train": 7639,
+   "test": 848,
+   "avg_chars": 72.0,
+   "avg_words": 6.7,
+   "total_chars": 610667
+  }
+ ],
+ "not_used": [
+  {
+   "name": "SeLLaI Mal-Eng, English class",
+   "rows": 10030,
+   "why": "plain English, not Manglish"
+  },
+  {
+   "name": "DravidianCodeMix (Malayalam-English comments)",
+   "rows": null,
+   "why": "comments are already noisy, so they cannot serve as clean targets"
+  }
+ ],
+ "train_total": 18548,
+ "test_total": 2059
+}

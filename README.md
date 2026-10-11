@@ -111,10 +111,27 @@ python run_more.py --phases seeds
 python run_more.py --phases data train combined studies report --dakshina ../data/raw/dakshina_dataset_v1.0.tar
 ```
 
+- `profile_project.py` records the dataset sizes and sentence lengths and the time and memory of every training run
+  (`results/data/dataset_profile.json`, `results/run_times.json`); pass the console logs of `run_more.py` with
+  `--queue-log` to include the step times of the longer evaluation and study steps.
 - `collect_results.py` copies the metrics, predictions and summaries into `results/` (committed, 4 MB), and
   `build_report.py` turns them into the static page `report/index.html` (prose lives in `report/copy.json`). Open the
   file in a browser; it has no server and no dependencies beyond Google Fonts. Adapters (`outputs/`) and datasets
   (`data/`) are not committed.
+
+## Publishing the results page (GitHub Pages)
+
+The page is one self-contained file, `report/index.html` (its only outside request is Google Fonts). To serve it:
+
+```bash
+python src/publish_pages.py     # builds the local gh-pages branch: index.html and .nojekyll only
+git push origin gh-pages
+```
+
+Then on GitHub open Settings, Pages, choose "Deploy from a branch", pick `gh-pages` and the `/ (root)` folder, and
+save. The site appears at `https://<user>.github.io/<repository>/`. Run the two commands again after rebuilding the
+page; an unchanged page adds no commit. The branch is built with git plumbing, so your working folder and current
+branch are not touched.
 
 ## Tests
 

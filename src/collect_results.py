@@ -9,7 +9,7 @@ from config import RES_DIR, PROC_DIR, ROOT
 
 DEST = ROOT / "results"
 TOP = ["metrics_*.json", "preds_*.csv", "analysis_*.md", "summary.csv", "summary.md", "seeds_summary.md",
-       "report_data.json", "comparison.png"]
+       "report_data.json", "run_times.json", "comparison.png"]
 STUDY_DIRS = {"combined_all": ["*.csv", "*.json"], "decoding_all": ["decoding_detail.csv", "decoding_summary.*"],
               "robustness_all": ["*.csv", "*.json"]}
 DATA_STATS = ["stats.json", "train_plus_all.stats.json"]
@@ -37,6 +37,9 @@ def main():
         if f.exists():
             total += copy(f, DEST / "data" / name)
             count += 1
+    for f in sorted((RES_DIR / "data").glob("*.json")):
+        total += copy(f, DEST / "data" / f.name)
+        count += 1
     print(f"copied {count} files, {total / 1e6:.1f} MB into {DEST}")
 
 
