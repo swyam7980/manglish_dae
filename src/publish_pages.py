@@ -28,8 +28,23 @@ def blob(repo, data):
     return git(repo, "hash-object", "-w", "--no-filters", "--stdin", stdin=data)
 
 
-def publish(repo, html_path, branch=BRANCH, message=None):
-    """Create or update `branch` so its tree is index.html + .nojekyll. Returns the new commit, or None if unchanged."""
+TEXT_SUFFIXES = {".html", ".js", ".json", ".css", ".md"}
+
+
+def site_files(demo_dir):
+    """{'demo/<relative path>': bytes} for every file of the browser demo folder (model files stay byte-exact)."""
+    out = {}
+    for p in sorted(Path(demo_dir).rglob("*")):
+        if p.is_file():
+            data = p.read_bytes()
+            out["demo/" + p.relative_to(demo_dir).as_posix()] = (
+                data.replace(b"\r\n", b"\n") if p.suffix in TEXT_SUFFIXES else data)
+    return out
+
+
+def publish(repo, html_path, branch=BRANCH, message=None, extra=None):
+    """Create or update `branch` so its tree is index.html + .nojekyll (+ `extra`: {path: bytes}).
+    Returns the new commit, or None if unchanged."""
     repo = Path(repo)
     page = Path(html_path).read_bytes().replace(b"\r\n", b"\n")
     ref = f"refs/heads/{branch}"
@@ -39,7 +54,7 @@ def publish(repo, html_path, branch=BRANCH, message=None):
         parent = None
     with tempfile.TemporaryDirectory() as tmp:
         env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
-        for name, data in (("index.html", page), (".nojekyll", b"")):
+        for name, data in (("index.html", page), (".nojekyll", b""), *(extra or {}).items()):
             git(repo, "update-index", "--add", "--cacheinfo", f"100644,{blob(repo, data)},{name}", env=env)
         tree = git(repo, "write-tree", env=env)
     if parent and git(repo, "rev-parse", f"{parent}^{{tree}}") == tree:
@@ -61,8 +76,13 @@ def main(argv=None):
     ap.add_argument("--html", default=str(ROOT / "report" / "index.html"))
     ap.add_argument("--branch", default=BRANCH)
     ap.add_argument("--repo", default=str(ROOT))
+    ap.add_argument("--demo", help="browser demo folder to publish under demo/ (default: outputs/demo_site when built)")
     a = ap.parse_args(argv)
-    commit = publish(a.repo, a.html, a.branch)
+    if a.demo is None:
+        from config import OUT_DIR
+        built = OUT_DIR / "demo_site"
+        a.demo = str(built) if (built / "index.html").exists() else None  # each publish rebuilds the whole tree
+    commit = publish(a.repo, a.html, a.branch, extra=site_files(a.demo) if a.demo else None)
     if commit:
         print(f"{a.branch} is now {commit[:7]}. Publish it with: git push origin {a.branch}")
     else:

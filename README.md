@@ -133,10 +133,55 @@ save. The site appears at `https://<user>.github.io/<repository>/`. Run the two 
 page; an unchanged page adds no commit. The branch is built with git plumbing, so your working folder and current
 branch are not touched.
 
+## Our model: Manglish-ByT5 and Manglish-Tiny
+
+The comparison picked ByT5 as the best backbone given enough data, with heavier noise as its weak spot. We used that
+to train our own translator on the same training split (test sentences never seen), doing two tasks chosen by a
+prefix: `clean:` (noisy Manglish to clean Manglish) and `ml:` (Manglish to Malayalam script, from Dakshina's
+line-aligned romanised/native files plus its word lexicon).
+
+| model | what it is | weights | runs |
+|---|---|---|---|
+| Manglish-ByT5 | ByT5-base, wider LoRA (attention + feed-forward, r 32), 4 epochs, fresh noise of all six robustness types every epoch, adapter merged | `outputs/ours_byt5/model` (~1.2 GB, plain `transformers` folder) | GPU or CPU |
+| Manglish-Tiny | 6.5M-parameter character transformer trained from scratch on the same data and noise | `outputs/ours_tiny` (26 MB) + int8 ONNX (~7 MB) | CPU, or in the browser |
+
+```bash
+cd src
+python run_ours.py                 # data -> train ByT5 (~4 h on a 6 GB laptop GPU) -> train Tiny -> ONNX -> eval -> demo
+python translate.py --task clean "njaaan naaale varummm"
+python translate.py --task ml --model tiny "njan nale varum"
+cd .. && python app.py             # local web interface at http://127.0.0.1:7860
+```
+
+`eval_ours.py` scores both models on exactly the comparison's inputs: the 2,059-sentence combined test set (paired
+bootstrap against every stored combined-data prediction), the 600-sentence robustness subsample under all six noise
+conditions, and 658 held-out Dakshina sentences for the script task (against a rule-based transliterator). Results
+go to `results/ours/` and the "Our model" section of the results page. Our models trained on the robustness noise
+types; the comparison models did not, and the page says so.
+
+### Free hosting
+
+* **Browser demo (no server):** `python src/build_demo.py` then `python src/publish_pages.py` adds `demo/` to the
+  gh-pages branch; Manglish-Tiny runs inside the visitor's browser with onnxruntime-web, at
+  `https://<user>.github.io/<repository>/demo/`.
+* **Weights:** `python src/publish_hub.py --repo <hf-user>/manglish-translator` builds `outputs/hub/` (both models and
+  a model card) and `outputs/space/` (a Gradio Space). Upload with your own token:
+
+```bash
+hf auth login
+hf upload <hf-user>/manglish-translator outputs/hub . --repo-type model
+hf upload <hf-user>/manglish-translator-demo outputs/space . --repo-type space
+```
+
+  The Space (free CPU) downloads the weights from the model repo on first start and serves both models; then
+  rebuild the demo with `--space` and `--weights` links so the GitHub page points to them.
+
 ## Tests
 
 `pytest tests` runs unit tests (noise, metrics, data prep) and an offline end-to-end wiring test on tiny randomly
 initialised models (no downloads). They verify the plumbing, not model quality; real results need the real weights.
+`tests/test_ours.py` covers our models: script-pair alignment, the noise mix, Tiny training, ONNX parity with
+PyTorch, and the ByT5 train-merge-reload path.
 
 ## Limits of the study
 

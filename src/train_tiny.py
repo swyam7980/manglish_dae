@@ -1,0 +1,160 @@
+"""Train Manglish-Tiny from scratch on the same rows and noise mix as Manglish-ByT5.
+
+Each epoch draws fresh noise (train_ours.build_examples), so the small model sees many corruptions of every sentence.
+The checkpoint with the lowest loss on a fixed slice of noisy training-style examples is kept (the test sets are never
+looked at during training). Output: outputs/ours_tiny/{model.pt, vocab.json, config.json, train_info.json}.
+"""
+import argparse
+import json
+import math
+import random
+import time
+
+import torch
+from torch import nn
+
+from config import PROC_DIR, OUT_DIR, SEED
+from tiny_model import DEFAULTS, PAD, BOS, CharVocab, TinySeq2Seq, pad_batch
+from train import read_jsonl
+from train_ours import build_examples, TASK_PREFIX
+
+MAX_SRC = 200
+MAX_TGT = 200
+EPOCHS = 40
+BATCH = 128
+LR = 1e-3
+DEV_ROWS = 1000
+TAG = "ours_tiny"
+
+
+def split_prefix(src):
+    """'clean: text' -> ('clean', 'text'): the ByT5 examples carry their task as a text prefix."""
+    for task, pre in TASK_PREFIX.items():
+        if src.startswith(pre):
+            return task, src[len(pre):]
+    raise ValueError(src[:20])
+
+
+def to_ids(examples, vocab):
+    out = []
+    for e in examples:
+        task, text = split_prefix(e["src"])
+        out.append((vocab.encode_src(text, task, MAX_SRC), vocab.encode_tgt(e["tgt"], MAX_TGT)))
+    return out
+
+
+def batches(pairs, size, rng):
+    """Length-bucketed batches: sort a shuffled pool by length, cut it into batches, shuffle the batches."""
+    idx = list(range(len(pairs)))
+    rng.shuffle(idx)
+    pool = 50 * size
+    out = []
+    for s in range(0, len(idx), pool):
+        chunk = sorted(idx[s:s + pool], key=lambda i: len(pairs[i][1]))
+        out += [chunk[k:k + size] for k in range(0, len(chunk), size)]
+    rng.shuffle(out)
+    return out
+
+
+def loss_on(model, pairs, crit, dev, size=256):
+    model.eval()
+    tot, n = 0.0, 0
+    with torch.no_grad():
+        for k in range(0, len(pairs), size):
+            src, tgt = zip(*pairs[k:k + size])
+            loss, toks = step_loss(model, src, tgt, crit, dev)
+            tot += loss.item() * toks
+            n += toks
+    model.train()
+    return tot / n
+
+
+def step_loss(model, src, tgt, crit, dev):
+    s = pad_batch(list(src)).to(dev)
+    t = pad_batch([[BOS] + x for x in tgt]).to(dev)
+    with torch.autocast(dev, dtype=torch.bfloat16, enabled=dev == "cuda"):
+        logits = model(s, t[:, :-1])
+    y = t[:, 1:]
+    return crit(logits.float().reshape(-1, logits.size(-1)), y.reshape(-1)), int(y.ne(PAD).sum())
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--train-file", default="train_plus_all.jsonl")
+    ap.add_argument("--ml-file", default="ours_ml_train.jsonl")
+    ap.add_argument("--epochs", type=int, default=EPOCHS)
+    ap.add_argument("--batch", type=int, default=BATCH)
+    ap.add_argument("--lr", type=float, default=LR)
+    ap.add_argument("--max-train", type=int, default=0)
+    ap.add_argument("--seed", type=int, default=SEED)
+    ap.add_argument("--tag", default=TAG)
+    ap.add_argument("--device", choices=["cuda", "cpu"], help="default: cuda when available")
+    for k, v in DEFAULTS.items():
+        ap.add_argument(f"--{k.replace('_', '-')}", type=type(v), default=v)
+    a = ap.parse_args(argv)
+
+    torch.manual_seed(a.seed)
+    rng = random.Random(a.seed)
+    dev = a.device or ("cuda" if torch.cuda.is_available() else "cpu")
+    clean_rows = [r["clean"] for r in read_jsonl(PROC_DIR / a.train_file)]
+    ml_rows = read_jsonl(PROC_DIR / a.ml_file)
+    if a.max_train:
+        clean_rows, ml_rows = clean_rows[: a.max_train], ml_rows[: a.max_train]
+    # the vocabulary covers every character the targets can contain, plus the Malayalam block
+    malayalam = [chr(c) for c in range(0x0D00, 0x0D80)] + [chr(0x200C), chr(0x200D)]  # + zero-width (non-)joiner
+    vocab = CharVocab.from_texts(clean_rows + [r["native"] for r in ml_rows] + [r["roman"] for r in ml_rows] + malayalam)
+    dev_pairs = to_ids(build_examples(clean_rows, ml_rows, 1, a.seed, first_epoch=10_000), vocab)
+    dev_pairs = random.Random(a.seed).sample(dev_pairs, min(DEV_ROWS, len(dev_pairs)))
+
+    arch = {k: getattr(a, k) for k in DEFAULTS}
+    model = TinySeq2Seq(len(vocab), **arch).to(dev)
+    n_params = sum(p.numel() for p in model.parameters())
+    print(f"[tiny] {n_params / 1e6:.2f}M parameters, vocab {len(vocab)}, device {dev}", flush=True)
+    per_epoch = len(clean_rows) + len(ml_rows)
+    total_steps = a.epochs * math.ceil(per_epoch / a.batch)
+    opt = torch.optim.AdamW(model.parameters(), lr=a.lr, betas=(0.9, 0.98), weight_decay=0.01)
+    warm = max(1, int(0.04 * total_steps))
+    sched = torch.optim.lr_scheduler.LambdaLR(
+        opt, lambda s: min(1.0, (s + 1) / warm) * max(0.02, 0.5 * (1 + math.cos(math.pi * min(1.0, s / total_steps)))))
+    crit = nn.CrossEntropyLoss(ignore_index=PAD, label_smoothing=0.1)
+
+    out = OUT_DIR / a.tag
+    out.mkdir(parents=True, exist_ok=True)
+    vocab.save(out / "vocab.json")
+    cfg = {"arch": arch, "max_src": MAX_SRC, "max_tgt": MAX_TGT, "task_prefix": TASK_PREFIX, "params": n_params}
+    (out / "config.json").write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+
+    history, best, t0, step = [], math.inf, time.time(), 0
+    model.train()
+    for ep in range(a.epochs):
+        pairs = to_ids(build_examples(clean_rows, ml_rows, 1, a.seed, first_epoch=ep), vocab)
+        run, seen = 0.0, 0
+        for b in batches(pairs, a.batch, rng):
+            src, tgt = zip(*(pairs[i] for i in b))
+            loss, _ = step_loss(model, src, tgt, crit, dev)
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            opt.step()
+            sched.step()
+            step += 1
+            run += loss.item()
+            seen += 1
+        dev_loss = loss_on(model, dev_pairs, crit, dev)
+        history.append({"epoch": ep + 1, "train_loss": round(run / seen, 4), "dev_loss": round(dev_loss, 4)})
+        print(f"[tiny] epoch {ep + 1}/{a.epochs} train {run / seen:.4f} dev {dev_loss:.4f} "
+              f"({(time.time() - t0) / 60:.1f} min)", flush=True)
+        if dev_loss < best:
+            best = dev_loss
+            torch.save(model.state_dict(), out / "model.pt")
+    info = {"params": n_params, "vocab": len(vocab), "epochs": a.epochs, "steps": step, "batch": a.batch, "lr": a.lr,
+            "best_dev_loss": round(best, 4), "minutes": round((time.time() - t0) / 60, 2), "seed": a.seed,
+            "peak_gpu_gb": round(torch.cuda.max_memory_allocated() / 1e9, 2) if dev == "cuda" else None,
+            "clean_rows": len(clean_rows), "ml_rows": len(ml_rows), "history": history}
+    (out / "train_info.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
+    print("DONE", {k: v for k, v in info.items() if k != "history"})
+    return info
+
+
+if __name__ == "__main__":
+    main()

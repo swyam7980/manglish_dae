@@ -5,14 +5,15 @@ the datasets (data/) or logs. Run with MDAE_WORKDIR set when the working data li
 """
 import shutil
 
-from config import RES_DIR, PROC_DIR, ROOT
+from config import RES_DIR, PROC_DIR, OUT_DIR, ROOT
 
 DEST = ROOT / "results"
 TOP = ["metrics_*.json", "preds_*.csv", "analysis_*.md", "summary.csv", "summary.md", "seeds_summary.md",
        "report_data.json", "run_times.json", "comparison.png"]
 STUDY_DIRS = {"combined_all": ["*.csv", "*.json"], "decoding_all": ["decoding_detail.csv", "decoding_summary.*"],
-              "robustness_all": ["*.csv", "*.json"]}
-DATA_STATS = ["stats.json", "train_plus_all.stats.json"]
+              "robustness_all": ["*.csv", "*.json"], "ours": ["*.csv", "*.json", "*.md"]}
+DATA_STATS = ["stats.json", "train_plus_all.stats.json", "ours_ml.stats.json"]
+OUR_MODELS = {"ours_byt5": "train_info.json", "ours_tiny": "train_info.json"}  # training records, not weights
 
 
 def copy(src, dst):
@@ -36,6 +37,11 @@ def main():
         f = PROC_DIR / name
         if f.exists():
             total += copy(f, DEST / "data" / name)
+            count += 1
+    for tag, name in OUR_MODELS.items():
+        f = OUT_DIR / tag / name
+        if f.exists():
+            total += copy(f, DEST / "ours" / f"train_info_{tag}.json")
             count += 1
     for f in sorted((RES_DIR / "data").glob("*.json")):
         total += copy(f, DEST / "data" / f.name)

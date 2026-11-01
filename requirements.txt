@@ -12,3 +12,8 @@ openpyxl
 matplotlib
 tabulate
 pytest
+# our models: browser export, local interface, script baseline
+onnx
+onnxruntime
+gradio>=4.44
+indic-transliteration

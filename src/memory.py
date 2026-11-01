@@ -14,6 +14,12 @@ VRAM_FRACTION = 0.80   # the probe omits optimizer and trainer overhead, so keep
 LAST_PROBE = {}        # micro-batch size -> peak bytes measured by the most recent pick_micro_batch call
 
 
+def is_oom(err):
+    """torch.cuda.OutOfMemoryError, or the plain RuntimeError a kernel raises when the driver itself runs out."""
+    return isinstance(err, torch.cuda.OutOfMemoryError) or (
+        isinstance(err, RuntimeError) and "out of memory" in str(err).lower())
+
+
 def free_cuda():
     gc.collect()
     if torch.cuda.is_available():
@@ -41,7 +47,9 @@ def pick_micro_batch(try_batch, effective=EFFECTIVE_BATCH, budget_bytes=None, pe
             torch.cuda.reset_peak_memory_stats()
         try:
             try_batch(bs)
-        except torch.cuda.OutOfMemoryError:
+        except RuntimeError as e:
+            if not is_oom(e):
+                raise
             free_cuda()
             continue
         peak = peak_bytes()
@@ -68,7 +76,9 @@ def run_with_backoff(fn, items, start_batch, min_batch=1):
         try:
             out += fn(items[i:i + bs])
             i += bs
-        except torch.cuda.OutOfMemoryError:
+        except RuntimeError as e:
+            if not is_oom(e):
+                raise
             free_cuda()
             if bs <= min_batch:
                 raise

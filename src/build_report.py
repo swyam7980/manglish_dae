@@ -24,14 +24,14 @@ HEAD = r"""<title>Manglish DAE Results</title>
 :root {
   --bg: #f3f3f3; --surface: #ffffff; --fg: #131313; --muted: #5c5c5c; --line: #dcdcdc; --soft: #ebebeb;
   --mbart: #2a2a2a; --byt5: #ff3f02; --mt5: #2b57d4; --base: #9a9a9a; --bad: #b3261e; --good: #0a8671;
-  --accent: #ff3f02; --accent2: #ff8b3d; --on-accent: #ffffff;
+  --accent: #ff3f02; --accent2: #ff8b3d; --on-accent: #ffffff; --ours: #7b2fbe;
   --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 :root[data-theme="dark"] {
   --bg: #0e1218; --surface: #161b23; --fg: #e8ebf1; --muted: #9aa5b6; --line: #2a303b; --soft: #1e2430;
   --mbart: #7b9cff; --byt5: #3cc9ad; --mt5: #e3a23c; --base: #7f8a9c; --bad: #ef7a6d; --good: #3cc9ad;
-  --accent: #7b9cff; --accent2: #3cc9ad; --on-accent: #0e1218; color-scheme: dark; }
+  --accent: #7b9cff; --accent2: #3cc9ad; --on-accent: #0e1218; --ours: #d08bff; color-scheme: dark; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 16px; line-height: 1.55; margin: 0; }
@@ -102,6 +102,9 @@ svg .val { fill: var(--fg); }
 ul.plain { padding-left: 1.15em; margin: 0 0 12px; max-width: 78ch; }
 ul.plain li { margin-bottom: 7px; }
 .note { color: var(--muted); font-size: 0.88rem; margin-top: 12px; max-width: 100ch; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
+.cta a { display: inline-block; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); text-decoration: none; font-weight: 500; font-size: 0.92rem; }
+.cta a.primary { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: var(--on-accent); border-color: transparent; }
 footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; max-width: 110ch; }
 @media (max-width: 700px) {
   .bar-in { gap: 10px; }
@@ -127,6 +130,21 @@ BODY = r"""<script>try { const t = localStorage.getItem("manglish-theme"); if (t
   </div>
 
   <section id="reco"><h2>What to use</h2><div class="prose" id="recotext"></div></section>
+
+  <section id="ours" class="stack" hidden>
+    <h2>Our model</h2>
+    <p class="sub" id="ours-sub"></p>
+    <p class="cta" id="ours-links"></p>
+    <div class="cols2">
+      <div class="panel"><h3>Cleaning noisy Manglish, combined test set (CER %)</h3><table id="ourstab"></table></div>
+      <div class="panel"><h3>Our models minus each comparison model, paired bootstrap on CER</h3><div id="forest3"></div></div>
+    </div>
+    <div class="cols2">
+      <div class="panel"><h3>Under heavier and different noise (CER %, 600 sentences)</h3><table id="oursrob"></table><p class="note" id="oursrob-note"></p></div>
+      <div class="panel"><h3>Manglish to Malayalam script, held-out Dakshina sentences</h3><table id="oursml"></table><p class="note" id="oursml-note"></p></div>
+    </div>
+    <div class="panel"><h3>How they were trained</h3><table id="ourstrain"></table></div>
+  </section>
 
   <section id="datasets" hidden>
     <h2>Datasets</h2>
@@ -242,13 +260,15 @@ const SHORT = {mbart_large: 'mBART-50', byt5_base: 'ByT5-base', 'mt5_base_lr1e-3
   mbart_large_plusall: 'mBART-50 + data', byt5_base_plusall: 'ByT5 + data', mt5_base_plusall: 'mT5, LR 2e-4 + data', 'mt5_base_lr1e-3_plusall': 'mT5, LR 1e-3 + data'};
 const CN = {mbart: 'mBART-50', byt5: 'ByT5-base', 'mt5_lr1e-3': 'mT5, LR 1e-3', mt5: 'mT5, LR 2e-4', mbart_plusall: 'mBART-50 + data',
   byt5_plusall: 'ByT5 + data', mt5_plusall: 'mT5, LR 2e-4 + data', 'mt5_lr1e-3_plusall': 'mT5, LR 1e-3 + data',
-  copy_input: 'copy the input', rule_collapse_runs: 'rule-based cleaner'};
+  copy_input: 'copy the input', rule_collapse_runs: 'rule-based cleaner', ours_byt5: 'Manglish-ByT5 (ours)',
+  ours_tiny: 'Manglish-Tiny (ours)', rule_transliteration: 'rule-based transliterator'};
 const NEURAL = ['mbart', 'byt5', 'mt5_lr1e-3', 'mt5', 'mbart_plusall', 'byt5_plusall', 'mt5_lr1e-3_plusall', 'mt5_plusall'];
 const SRC_NAME = {ALL: 'All sources', sellai_manglish: 'SeLLaI Manglish', 'sellai_mixed-code': 'SeLLaI Mixed-Code', dakshina_ml: 'Dakshina'};
 const short = k => SHORT[k] || k;
 const cname = k => CN[k] || SHORT[k] || k;
 function colorOf(k) {
   if (k === 'identity') return 'var(--base)';
+  if (k.indexOf('ours') === 0) return 'var(--ours)';
   if (k.indexOf('mbart') === 0) return 'var(--mbart)';
   if (k.indexOf('byt5') === 0) return 'var(--byt5)';
   if (k.indexOf('mt5') === 0) return 'var(--mt5)';
@@ -279,7 +299,7 @@ function renderTiles() {
 }
 
 function renderNav() {
-  const items = [['reco', 'What to use'], ['datasets', 'Datasets'], ['results', 'Results'], ['moredata', 'More data'], ['bysource', 'By source'],
+  const items = [['reco', 'What to use'], ['ours', 'Our model'], ['datasets', 'Datasets'], ['results', 'Results'], ['moredata', 'More data'], ['bysource', 'By source'],
     ['significance', 'Significance'], ['robustness', 'Robustness'], ['decoding', 'Decoding'], ['training', 'Training'], ['failures', 'Failures'],
     ['examples-sec', 'Examples'], ['compute', 'Compute'], ['limits', 'Limits']];
   el('nav').innerHTML = items.filter(([id]) => !el(id).hidden).map(([id, l]) => `<a href="#${id}">${l}</a>`).join('');
@@ -550,6 +570,59 @@ function renderCompute() {
   el('compute-sub').textContent = `Everything ran on one ${gpu} with ${gb} GB of memory: ${fmt(R.training_minutes / 60, 1)} hours of training in ${R.runs.length} runs and ${fmt(R.step_minutes / 60, 1)} hours of evaluation and studies, ${fmt((R.training_minutes + R.step_minutes) / 60, 1)} hours in all. Runs on the larger data take 3,480 steps instead of 552, and use the largest micro-batch that fits in memory; the effective batch is 16 in every run.`;
 }
 
+const OURS = ['ours_byt5', 'ours_tiny'];
+function renderOurs() {
+  const O = X.ours; if (!O || !O.combined) return;
+  el('ours').hidden = false;
+  const C = D.copy;
+  el('ours-links').innerHTML = (C.oursLinks || []).filter(l => l[1]).map(([t, u, primary]) =>
+    `<a href="${u}"${u.indexOf('http') === 0 ? ' target="_blank" rel="noopener"' : ''}${primary ? ' class="primary"' : ''}>${t}</a>`).join('');
+  const ours = OURS.filter(k => O.combined[k]);
+  const sources = ['ALL', 'sellai_manglish', 'sellai_mixed-code', 'dakshina_ml'];
+  const comb = X.combined || [];
+  const others = ['byt5_plusall', 'mbart_plusall', 'mt5_lr1e-3_plusall', 'rule_collapse_runs'];
+  const rows = ours.map(k => [k, Object.fromEntries(sources.map(s => [s, O.combined[k].scores[s] ? O.combined[k].scores[s].CER : null]))])
+    .concat(others.map(k => [k, Object.fromEntries(sources.map(s => { const r = comb.find(q => q.system === k && q.source === s); return [s, r ? r.CER.mean : null]; }))]))
+    .filter(([, v]) => v.ALL !== null);
+  const best = Math.min(...rows.map(([, v]) => v.ALL));
+  let h = '<thead><tr><th>System</th>' + sources.map(s => `<th>${SRC_NAME[s]}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(([k, v]) => {
+    h += `<tr><td>${dot(k)}${cname(k)}</td>` + sources.map(s => `<td class="num">${v[s] === null ? '' : (s === 'ALL' && v[s] === best ? '<strong>' + fmt(v[s]) + '</strong>' : fmt(v[s]))}</td>`).join('') + '</tr>';
+  });
+  el('ourstab').innerHTML = h + '</tbody>';
+  renderForest('forest3', ours.flatMap(k => O.combined[k].vs.filter(p => p.other !== 'byt5' && p.other !== 'mbart').map(p => ({a: k, b: p.other, mean: p.mean, lo: p.lo, hi: p.hi}))));
+
+  if (O.robustness) {
+    const conds = ['base', 'heavy', 'extreme', 'vowel_drop', 'phonetic', 'phonetic_plus_base'];
+    const CL = {base: 'as trained', heavy: '2x noise', extreme: '3x noise', vowel_drop: 'vowels dropped', phonetic: 'phonetic spelling', phonetic_plus_base: 'phonetic + noise'};
+    const rob = X.robustness || [];
+    const rv = (k, c) => O.robustness[k] ? O.robustness[k][c].CER : ((rob.find(q => q.system === k && q.condition === c) || {CER: {mean: null}}).CER.mean);
+    const list = OURS.filter(k => O.robustness[k]).concat(['byt5_plusall', 'mbart_plusall', 'rule_collapse_runs'].filter(k => rob.some(q => q.system === k)));
+    let t = '<thead><tr><th>System</th>' + conds.map(c => `<th>${CL[c]}</th>`).join('') + '</tr></thead><tbody>';
+    list.forEach(k => { t += `<tr><td>${dot(k)}${cname(k)}</td>` + conds.map(c => { const v = rv(k, c); return `<td class="num">${v === null ? '' : fmt(v)}</td>`; }).join('') + '</tr>'; });
+    el('oursrob').innerHTML = t + '</tbody>';
+    el('oursrob-note').innerHTML = C.oursRobNote || '';
+  }
+  if (O.script) {
+    let t = '<thead><tr><th>System</th><th>CER % from clean</th><th>chrF from clean</th><th>CER % from noisy</th><th>chrF from noisy</th></tr></thead><tbody>';
+    OURS.concat(['rule_transliteration']).filter(k => O.script[k]).forEach(k => {
+      const s = O.script[k];
+      t += `<tr><td>${dot(k)}${cname(k)}</td><td class="num">${fmt(s.clean.CER)}</td><td class="num">${fmt(s.clean.chrF, 1)}</td><td class="num">${fmt(s.noisy.CER)}</td><td class="num">${fmt(s.noisy.chrF, 1)}</td></tr>`;
+    });
+    el('oursml').innerHTML = t + '</tbody>';
+    el('oursml-note').innerHTML = C.oursMlNote || '';
+  }
+  const T = [['ours_byt5', X.ours_train_byt5], ['ours_tiny', X.ours_train_tiny]].filter(([, i]) => i);
+  let tr = '<thead><tr><th>Model</th><th>Parameters</th><th>Trained</th><th>Examples seen</th><th>Minutes</th><th>Peak GPU GB</th></tr></thead><tbody>';
+  T.forEach(([k, i]) => {
+    const params = k === 'ours_byt5' ? `${(i.total_params / 1e6).toFixed(0)}M <span class="sd">(${(i.trainable_params / 1e6).toFixed(1)}M LoRA)</span>` : `${(i.params / 1e6).toFixed(1)}M`;
+    const how = k === 'ours_byt5' ? `${i.epochs} epochs, LoRA r ${i.lora_r}, merged` : `${i.epochs} epochs from scratch`;
+    const seen = k === 'ours_byt5' ? i.examples : i.epochs * (i.clean_rows + i.ml_rows);
+    tr += `<tr><td>${dot(k)}${cname(k)}</td><td class="num">${params}</td><td class="num">${how}</td><td class="num">${seen.toLocaleString()}</td><td class="num">${fmt(i.minutes, 1)}</td><td class="num">${i.peak_gpu_gb === null ? '-' : fmt(i.peak_gpu_gb)}</td></tr>`;
+  });
+  el('ourstrain').innerHTML = tr + '</tbody>';
+}
+
 function fillCopy() {
   const C = D.copy;
   el('headline').textContent = C.headline;
@@ -559,11 +632,11 @@ function fillCopy() {
   el('recotext').innerHTML = C.reco;
   el('limitlist').innerHTML = C.limits.map(x => `<li>${x}</li>`).join('');
   el('devs').innerHTML = C.devs.map(x => `<li>${x}</li>`).join('');
-  [['dataSub', 'data-sub'], ['saniNote', 'sani-note'], ['moreSub', 'more-sub'], ['combSub', 'comb-sub'], ['robSub', 'rob-sub'], ['decSub', 'dec-sub']].forEach(([k, id]) => { if (C[k]) el(id).innerHTML = C[k]; });
+  [['oursSub', 'ours-sub'], ['dataSub', 'data-sub'], ['saniNote', 'sani-note'], ['moreSub', 'more-sub'], ['combSub', 'comb-sub'], ['robSub', 'rob-sub'], ['decSub', 'dec-sub']].forEach(([k, id]) => { if (C[k]) el(id).innerHTML = C[k]; });
 }
 
 function renderCharts() {
-  renderBars(); renderForest('forest', D.pairs); renderForest('forest2', D.pairs_combined); renderLoss(); renderRobust();
+  renderBars(); renderForest('forest', D.pairs); renderForest('forest2', D.pairs_combined); renderLoss(); renderRobust(); renderOurs();
 }
 fillCopy(); renderTable(); renderTabs(); renderLegend(); renderExamples(); renderFails();
 renderDatasets(); renderMore(); renderCombined(); renderDecode(); renderCompute(); renderTiles();
@@ -581,7 +654,8 @@ el('themebtn').onclick = () => {
 
 EXTRA_FILES = (("combined", "combined_all/combined_summary.json"), ("robustness", "robustness_all/robustness.json"),
                ("decoding", "decoding_all/decoding_summary.json"), ("data", "data/train_plus_all.stats.json"),
-               ("profile", "data/dataset_profile.json"), ("runs", "run_times.json"))
+               ("profile", "data/dataset_profile.json"), ("runs", "run_times.json"), ("ours", "ours/ours_summary.json"),
+               ("ours_train_byt5", "ours/train_info_ours_byt5.json"), ("ours_train_tiny", "ours/train_info_ours_tiny.json"))
 
 
 def main(argv=None):
