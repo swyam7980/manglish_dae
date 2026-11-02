@@ -159,6 +159,27 @@ conditions, and 658 held-out Dakshina sentences for the script task (against a r
 go to `results/ours/` and the "Our model" section of the results page. Our models trained on the robustness noise
 types; the comparison models did not, and the page says so.
 
+### English: Manglish -> English, and English words in the script task
+
+A third prefix, `en:`, translates Manglish to English, and `ml:` now translates English words typed into Manglish
+instead of spelling them out ("njan tomorrow varum" -> ഞാൻ നാളെ വരും, not ടുമോറോ). No Manglish-English corpus exists,
+so `en_data.py` makes one from about 212,000 Malayalam-English pairs (BPCC's human-translated sets, PMIndia, OPUS
+Wikimedia and Tatoeba; download steps in `data/README.md`): each Malayalam word is written with a spelling real people
+used in Dakshina's lexicon (rules for unknown words), and words whose English equivalent is in the pair's English
+sentence can be swapped for it (a dictionary mined from the pairs) to imitate code-mixing. Training continues from
+Manglish-ByT5 with the clean: and ml: rows replayed; a larger Tiny (about 20M parameters) is trained the same way for
+the browser.
+
+```bash
+cd src
+python run_ours.py --steps en_data train_byt5_en train_tiny_en export_en eval_en eval demo --force-eval
+python translate.py --task en "njan tomorrow varum"
+```
+
+`eval_en.py` tests on IN22-Conv and IN22-Gen (AI4Bharat's benchmark, never trained on), written as plain, noisy and
+code-mixed Manglish, against a pipeline that writes Malayalam script with our model and then translates it with
+NLLB-200 (a baseline only; it is CC BY-NC and is not redistributed). Results go to `results/ours_en/`.
+
 ### Free hosting
 
 * **Browser demo (no server):** `python src/build_demo.py` then `python src/publish_pages.py` adds `demo/` to the

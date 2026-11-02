@@ -3,6 +3,9 @@
 Each epoch draws fresh noise (train_ours.build_examples), so the small model sees many corruptions of every sentence.
 The checkpoint with the lowest loss on a fixed slice of noisy training-style examples is kept (the test sets are never
 looked at during training). Output: outputs/ours_tiny/{model.pt, vocab.json, config.json, train_info.json}.
+
+--en-file adds the en: task and code-mixed ml: examples exactly as train_ours.py does (see en_data.py); give it a
+larger model, e.g. --tag ours_tiny_en --d-model 384 --heads 6 --enc-layers 6 --dec-layers 4 --ff 1536 --epochs 10.
 """
 import argparse
 import json
@@ -16,7 +19,7 @@ from torch import nn
 from config import PROC_DIR, OUT_DIR, SEED
 from tiny_model import DEFAULTS, PAD, BOS, CharVocab, TinySeq2Seq, pad_batch
 from train import read_jsonl
-from train_ours import build_examples, TASK_PREFIX
+from train_ours import build_examples, sample_rows, TASK_PREFIX
 
 MAX_SRC = 200
 MAX_TGT = 200
@@ -86,6 +89,9 @@ def main(argv=None):
     ap.add_argument("--batch", type=int, default=BATCH)
     ap.add_argument("--lr", type=float, default=LR)
     ap.add_argument("--max-train", type=int, default=0)
+    ap.add_argument("--en-file", help="en_data.py output: adds the en: task and code-mixed ml: examples")
+    ap.add_argument("--en-max", type=int, default=0, help="English pairs per epoch (0 = all)")
+    ap.add_argument("--mlx-max", type=int, default=40000, help="code-mixed ml: examples per epoch")
     ap.add_argument("--seed", type=int, default=SEED)
     ap.add_argument("--tag", default=TAG)
     ap.add_argument("--device", choices=["cuda", "cpu"], help="default: cuda when available")
@@ -98,19 +104,29 @@ def main(argv=None):
     dev = a.device or ("cuda" if torch.cuda.is_available() else "cpu")
     clean_rows = [r["clean"] for r in read_jsonl(PROC_DIR / a.train_file)]
     ml_rows = read_jsonl(PROC_DIR / a.ml_file)
+    en_rows, mlx_rows = [], []
+    if a.en_file:
+        all_en = read_jsonl(PROC_DIR / a.en_file)
+        en_rows = sample_rows(all_en, a.en_max, a.seed, "en")
+        mlx_rows = sample_rows([r for r in all_en if any(sw for _, sw in r["toks"])], a.mlx_max, a.seed, "mlx")
     if a.max_train:
         clean_rows, ml_rows = clean_rows[: a.max_train], ml_rows[: a.max_train]
+        en_rows, mlx_rows = en_rows[: a.max_train], mlx_rows[: a.max_train]
+    tasks = ("clean", "ml", "en") if a.en_file else ("clean", "ml")
     # the vocabulary covers every character the targets can contain, plus the Malayalam block
     malayalam = [chr(c) for c in range(0x0D00, 0x0D80)] + [chr(0x200C), chr(0x200D)]  # + zero-width (non-)joiner
-    vocab = CharVocab.from_texts(clean_rows + [r["native"] for r in ml_rows] + [r["roman"] for r in ml_rows] + malayalam)
-    dev_pairs = to_ids(build_examples(clean_rows, ml_rows, 1, a.seed, first_epoch=10_000), vocab)
+    vocab = CharVocab.from_texts(clean_rows + [r["native"] for r in ml_rows] + [r["roman"] for r in ml_rows] + malayalam
+                                 + [r["en"] for r in en_rows] + [r["ml"] for r in mlx_rows], tasks=tasks)
+    epoch_examples = lambda ep: build_examples(clean_rows, ml_rows, 1, a.seed, first_epoch=ep, en_rows=en_rows,
+                                               mlx_rows=mlx_rows)
+    dev_pairs = to_ids(epoch_examples(10_000), vocab)
     dev_pairs = random.Random(a.seed).sample(dev_pairs, min(DEV_ROWS, len(dev_pairs)))
 
     arch = {k: getattr(a, k) for k in DEFAULTS}
     model = TinySeq2Seq(len(vocab), **arch).to(dev)
     n_params = sum(p.numel() for p in model.parameters())
     print(f"[tiny] {n_params / 1e6:.2f}M parameters, vocab {len(vocab)}, device {dev}", flush=True)
-    per_epoch = len(clean_rows) + len(ml_rows)
+    per_epoch = len(clean_rows) + len(ml_rows) + len(en_rows) + len(mlx_rows)
     total_steps = a.epochs * math.ceil(per_epoch / a.batch)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr, betas=(0.9, 0.98), weight_decay=0.01)
     warm = max(1, int(0.04 * total_steps))
@@ -121,13 +137,14 @@ def main(argv=None):
     out = OUT_DIR / a.tag
     out.mkdir(parents=True, exist_ok=True)
     vocab.save(out / "vocab.json")
-    cfg = {"arch": arch, "max_src": MAX_SRC, "max_tgt": MAX_TGT, "task_prefix": TASK_PREFIX, "params": n_params}
+    cfg = {"arch": arch, "max_src": MAX_SRC, "max_tgt": MAX_TGT, "task_prefix": {t: TASK_PREFIX[t] for t in tasks},
+           "tasks": list(tasks), "params": n_params}
     (out / "config.json").write_text(json.dumps(cfg, indent=2), encoding="utf-8")
 
     history, best, t0, step = [], math.inf, time.time(), 0
     model.train()
     for ep in range(a.epochs):
-        pairs = to_ids(build_examples(clean_rows, ml_rows, 1, a.seed, first_epoch=ep), vocab)
+        pairs = to_ids(epoch_examples(ep), vocab)
         run, seen = 0.0, 0
         for b in batches(pairs, a.batch, rng):
             src, tgt = zip(*(pairs[i] for i in b))
@@ -150,7 +167,8 @@ def main(argv=None):
     info = {"params": n_params, "vocab": len(vocab), "epochs": a.epochs, "steps": step, "batch": a.batch, "lr": a.lr,
             "best_dev_loss": round(best, 4), "minutes": round((time.time() - t0) / 60, 2), "seed": a.seed,
             "peak_gpu_gb": round(torch.cuda.max_memory_allocated() / 1e9, 2) if dev == "cuda" else None,
-            "clean_rows": len(clean_rows), "ml_rows": len(ml_rows), "history": history}
+            "clean_rows": len(clean_rows), "ml_rows": len(ml_rows), "en_rows": len(en_rows), "mlx_rows": len(mlx_rows),
+            "tasks": list(tasks), "arch": arch, "history": history}
     (out / "train_info.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
     print("DONE", {k: v for k, v in info.items() if k != "history"})
     return info

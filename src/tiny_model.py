@@ -1,6 +1,6 @@
 """Manglish-Tiny: a small character-level encoder-decoder transformer trained from scratch.
 
-It does the same two tasks as Manglish-ByT5 (a task token picks clean Manglish or Malayalam script) and is small
+It does the same tasks as Manglish-ByT5 (a task token picks clean Manglish, Malayalam script or English) and is small
 enough (~7M parameters, a few MB as int8 ONNX) to run inside a web page. Characters are the tokens, so the vocabulary
 is just the letters, digits and punctuation of the training data plus the Malayalam block.
 """
@@ -11,35 +11,47 @@ import torch
 from torch import nn
 
 PAD, BOS, EOS, UNK = 0, 1, 2, 3
-TASK_TOKENS = {"clean": 4, "ml": 5}
-N_SPECIAL = 6
+TASK_TOKENS = {"clean": 4, "ml": 5, "en": 6}
+N_SPECIAL = 7
 MAX_POS = 512
 DEFAULTS = {"d_model": 256, "heads": 4, "enc_layers": 4, "dec_layers": 3, "ff": 1024, "dropout": 0.1}
 
 
 class CharVocab:
-    def __init__(self, chars):
+    """Characters after the special ids. A saved vocab keeps its own task tokens and special count, so a model trained
+    before the en task (clean 4, ml 5, six specials) still loads."""
+
+    def __init__(self, chars, task_tokens=None, n_special=None, tasks=None):
+        self.task_tokens = dict(task_tokens or TASK_TOKENS)
+        if tasks is not None:
+            self.task_tokens = {t: i for t, i in self.task_tokens.items() if t in tasks}
+        self.n_special = n_special or N_SPECIAL
         self.chars = list(chars)
-        self.index = {c: i + N_SPECIAL for i, c in enumerate(self.chars)}
+        self.index = {c: i + self.n_special for i, c in enumerate(self.chars)}
+
+    @property
+    def tasks(self):
+        return tuple(self.task_tokens)
 
     @classmethod
-    def from_texts(cls, texts):
-        return cls(sorted({c for t in texts for c in t}))
+    def from_texts(cls, texts, tasks=None):
+        return cls(sorted({c for t in texts for c in t}), tasks=tasks)
 
     @classmethod
     def load(cls, path):
-        return cls(json.loads(open(path, encoding="utf-8").read())["chars"])
+        d = json.loads(open(path, encoding="utf-8").read())
+        return cls(d["chars"], d.get("task_tokens", {"clean": 4, "ml": 5}), d.get("n_special", 6))
 
     def save(self, path):
         with open(path, "w", encoding="utf-8") as f:
             json.dump({"chars": self.chars, "pad": PAD, "bos": BOS, "eos": EOS, "unk": UNK,
-                       "task_tokens": TASK_TOKENS, "n_special": N_SPECIAL}, f, ensure_ascii=False)
+                       "task_tokens": self.task_tokens, "n_special": self.n_special}, f, ensure_ascii=False)
 
     def __len__(self):
-        return N_SPECIAL + len(self.chars)
+        return self.n_special + len(self.chars)
 
     def encode_src(self, text, task, max_len):
-        return [TASK_TOKENS[task]] + [self.index.get(c, UNK) for c in text[: max_len - 1]]
+        return [self.task_tokens[task]] + [self.index.get(c, UNK) for c in text[: max_len - 1]]
 
     def encode_tgt(self, text, max_len):
         return [self.index.get(c, UNK) for c in text[: max_len - 1]] + [EOS]
@@ -49,8 +61,8 @@ class CharVocab:
         for i in ids:
             if i == EOS:
                 break
-            if i >= N_SPECIAL:
-                out.append(self.chars[i - N_SPECIAL])
+            if i >= self.n_special:
+                out.append(self.chars[i - self.n_special])
         return "".join(out)
 
 

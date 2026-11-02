@@ -16,7 +16,8 @@ from tiny_model import BOS, EOS, EncoderOnly, DecoderStep, load_tiny
 
 OPSET = 17
 PARITY_SENTENCES = [("clean", "njaaan naaale varummm"), ("clean", "ente ammaye ariyoo"),
-                    ("ml", "njan nale varum"), ("ml", "kerala sarkkar")]
+                    ("ml", "njan nale varum"), ("ml", "kerala sarkkar"), ("ml", "njan tomorrow varum"),
+                    ("en", "njan tomorrow varum"), ("en", "ente veedu evideyaanu")]  # en only if the model has it
 
 
 def export(folder, out):
@@ -60,6 +61,8 @@ def parity(model, vocab, cfg, out, suffix=""):
     dec = ort.InferenceSession(str(out / f"decoder{suffix}.onnx"))
     rows = []
     for task, text in PARITY_SENTENCES:
+        if task not in vocab.tasks:
+            continue
         ids = vocab.encode_src(text, task, cfg["max_src"])
         ref = vocab.decode(model.greedy(torch.tensor([ids]), cfg["max_tgt"])[0].tolist())
         got = vocab.decode(ort_greedy(enc, dec, ids, cfg["max_tgt"]))

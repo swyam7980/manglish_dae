@@ -1,13 +1,16 @@
-"""Use our trained models: clean noisy Manglish or write it in Malayalam script.
+"""Use our trained models: clean noisy Manglish, write it in Malayalam script, or translate it to English.
 
     python translate.py --task clean "njaaan naaale varummm"
     python translate.py --task ml --model tiny "njan nale varum"
+    python translate.py --task en "njan tomorrow varum"
     python translate.py --task clean --file in.txt --out out.txt
 
---model byt5 loads outputs/ours_byt5/model (or --model-dir, e.g. a folder downloaded from the Hugging Face Hub);
---model tiny loads outputs/ours_tiny. Clean-task outputs from ByT5 go through the length guard from the comparison.
+--model byt5 loads outputs/ours_byt5_en/model when it exists (the model that also does en:), else outputs/ours_byt5/model
+(or --model-dir, e.g. a folder downloaded from the Hugging Face Hub); --model tiny loads outputs/ours_tiny_en when it
+exists, else outputs/ours_tiny. Clean-task outputs from ByT5 go through the length guard from the comparison.
 """
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -18,9 +21,12 @@ from generation import length_guard
 from memory import run_with_backoff
 from tiny_model import load_tiny, pad_batch
 
-TASKS = ("clean", "ml")
-DEFAULT_DIRS = {"byt5": OUT_DIR / "ours_byt5" / "model", "tiny": OUT_DIR / "ours_tiny"}
-BYT5_PREFIX = {"clean": "clean: ", "ml": "ml: "}
+TASKS = ("clean", "ml", "en")
+BYT5_DIRS = [OUT_DIR / "ours_byt5_en" / "model", OUT_DIR / "ours_byt5" / "model"]
+TINY_DIRS = [OUT_DIR / "ours_tiny_en", OUT_DIR / "ours_tiny"]
+DEFAULT_DIRS = {"byt5": next((d for d in BYT5_DIRS if (d / "config.json").exists()), BYT5_DIRS[-1]),
+                "tiny": next((d for d in TINY_DIRS if (d / "model.pt").exists()), TINY_DIRS[-1])}
+BYT5_PREFIX = {"clean": "clean: ", "ml": "ml: ", "en": "en: "}
 BYT5_MAX_SRC, BYT5_MAX_TGT = 192, 384
 
 
@@ -44,6 +50,16 @@ class Translator:
             self.model, self.vocab, self.cfg = load_tiny(folder, self.dev)
         else:
             raise ValueError(kind)
+        self.tasks = self._tasks(folder)
+
+    def _tasks(self, folder):
+        """Tasks this model was trained for, from its train_info.json (a model without one does clean and ml)."""
+        if self.kind == "tiny":
+            return tuple(t for t in TASKS if t in self.vocab.tasks)
+        for info in (folder / "train_info.json", folder.parent / "train_info.json"):
+            if info.exists():
+                return tuple(json.loads(info.read_text())["tasks"])
+        return ("clean", "ml")
 
     def _byt5(self, chunk, task):
         x = self.tok([BYT5_PREFIX[task] + s for s in chunk], return_tensors="pt", padding=True, truncation=True,
@@ -58,8 +74,8 @@ class Translator:
         return [self.vocab.decode(row.tolist()).strip() for row in out]
 
     def translate(self, texts, task="clean", batch=32):
-        if task not in TASKS:
-            raise ValueError(f"task must be one of {TASKS}")
+        if task not in self.tasks:
+            raise ValueError(f"this model does the tasks {self.tasks}, not {task!r}")
         texts = [t.strip().lower() for t in texts]
         fn = self._byt5 if self.kind == "byt5" else self._tiny
         preds, _ = run_with_backoff(lambda c: fn(c, task), texts, batch)

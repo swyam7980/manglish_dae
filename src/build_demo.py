@@ -29,7 +29,9 @@ def build(onnx_dir, out, space="", weights="", results=""):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--onnx-dir", default=str(OUT_DIR / "ours_tiny" / "onnx"))
+    tiny = next((t for t in ("ours_tiny_en", "ours_tiny") if (OUT_DIR / t / "onnx" / "export_report.json").exists()),
+                "ours_tiny")
+    ap.add_argument("--onnx-dir", default=str(OUT_DIR / tiny / "onnx"), help="default: the English model's when exported")
     ap.add_argument("--out", default=str(OUT_DIR / "demo_site"))
     ap.add_argument("--space", default="", help="URL of the Hugging Face Space hosting this demo")
     ap.add_argument("--results", default="", help="URL of the results page (default: the parent folder)")

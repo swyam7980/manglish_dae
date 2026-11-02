@@ -14,7 +14,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from config import RES_DIR
+from config import RES_DIR, OUT_DIR
 from evaluate import load_eval
 from extra_data import read_jsonl
 from config import PROC_DIR
@@ -25,8 +25,11 @@ from robustness import condition_inputs
 from seeds import bootstrap_diff, COMBINED_BOOT
 from translate import Translator
 
-LABELS = {"ours_byt5": "Manglish-ByT5 (ours)", "ours_tiny": "Manglish-Tiny (ours)"}
-KINDS = {"ours_byt5": "byt5", "ours_tiny": "tiny"}
+LABELS = {"ours_byt5": "Manglish-ByT5 (ours)", "ours_tiny": "Manglish-Tiny (ours)",
+          "ours_byt5_en": "Manglish-ByT5 + English (ours)", "ours_tiny_en": "Manglish-Tiny + English (ours)"}
+KINDS = {"ours_byt5": "byt5", "ours_tiny": "tiny", "ours_byt5_en": "byt5", "ours_tiny_en": "tiny"}
+DIRS = {"ours_byt5": OUT_DIR / "ours_byt5" / "model", "ours_tiny": OUT_DIR / "ours_tiny",
+        "ours_byt5_en": OUT_DIR / "ours_byt5_en" / "model", "ours_tiny_en": OUT_DIR / "ours_tiny_en"}
 COMPARE_WITH = ["byt5_plusall", "mbart_plusall", "mt5_lr1e-3_plusall", "byt5", "mbart"]
 ROB_SAMPLE = 600
 
@@ -46,7 +49,7 @@ def by_source(df):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--systems", nargs="+", default=list(LABELS))
+    ap.add_argument("--systems", nargs="+", default=[n for n, d in DIRS.items() if d.exists()])
     ap.add_argument("--parts", nargs="+", default=["combined", "robustness", "script"])
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--max-eval", type=int, default=0, help="cap sentences per part (smoke tests)")
@@ -70,7 +73,7 @@ def main(argv=None):
             sc.setdefault("rule_transliteration", {})[inp] = score(rule_transliterate([r[inp] for r in ml]), refs)
 
     for name in a.systems:
-        tr = Translator(KINDS[name], guard=False)
+        tr = Translator(KINDS[name], DIRS[name], guard=False)
         if "combined" in a.parts:
             raw = tr.translate([r["noisy"] for r in test], "clean", a.batch)
             guarded, replaced = length_guard(raw, [r["noisy"] for r in test])

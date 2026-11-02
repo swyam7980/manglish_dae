@@ -11,6 +11,12 @@ What the comparison taught us and how it is used here:
   * Its loss was still falling after 3 epochs, so it trains for 4 with a wider LoRA (attention + feed-forward).
 The adapter is merged into the base weights at the end, so the result is one ordinary model folder:
 outputs/ours_byt5/model (loadable with AutoModelForSeq2SeqLM, no peft needed).
+
+English (--en-file ours_en_train.jsonl, see en_data.py), trained on top of that model (--base-path):
+  en: <Manglish, some words in English>  ->  English
+  ml: <Manglish, some words in English>  ->  Malayalam script with those words translated ("tomorrow" -> നാളെ)
+with the original clean: and ml: rows replayed so the model keeps them:
+  python train_ours.py --base-path <WORK>/outputs/ours_byt5/model --en-file ours_en_train.jsonl --epochs 1       --tag ours_byt5_en --auto-batch --grad-ckpt --resume
 """
 import argparse
 import json
@@ -33,12 +39,15 @@ from models import load_base, load_tokenizer, pick_dtype, count_params
 from noise import corrupt, CONDITIONS
 from train import make_probe, read_jsonl
 
-TASK_PREFIX = {"clean": "clean: ", "ml": "ml: "}
+TASK_PREFIX = {"clean": "clean: ", "ml": "ml: ", "en": "en: "}
 # share of clean-task examples per noise type; "none" teaches the model to leave clean text alone
 NOISE_MIX = {"base": 0.45, "heavy": 0.15, "extreme": 0.05, "vowel_drop": 0.10, "phonetic": 0.10,
              "phonetic_plus_base": 0.10, "none": 0.05}
 # script-task inputs: typed cleanly, with the usual typos, or spelled another way
 ML_INPUT_MIX = {"none": 0.50, "base": 0.35, "phonetic": 0.15}
+# share of swappable Malayalam words written in English: en inputs are often all Manglish, mixed ml inputs never are
+EN_SWAP_MIX = {0.0: 0.4, 0.2: 0.3, 0.5: 0.3}
+MLX_SWAP_MIX = {0.3: 0.5, 0.6: 0.5}
 MAX_SRC = 192             # bytes; elongated noisy input can pass the 128 of the comparison
 MAX_TGT = 384             # Malayalam is 3 bytes per character in UTF-8 (longest test target is 357)
 EPOCHS = 4
@@ -66,8 +75,10 @@ def pick(mix, rng):
     return next(reversed(mix))
 
 
-def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0):
-    """Fresh noise for every epoch, deterministic in (seed, epoch, row): a resumed run sees the same data."""
+def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_rows=(), mlx_rows=()):
+    """Fresh noise for every epoch, deterministic in (seed, epoch, row): a resumed run sees the same data.
+    en_rows/mlx_rows are en_data.py rows; each epoch draws a new spelling per word and a new set of English swaps."""
+    from en_data import render
     out = []
     for ep in range(first_epoch, first_epoch + epochs):
         for i, s in enumerate(clean_rows):
@@ -77,7 +88,22 @@ def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0):
             rng = random.Random(f"{seed}-ml-{ep}-{i}")
             out.append({"src": TASK_PREFIX["ml"] + noisy_version(r["roman"], pick(ML_INPUT_MIX, rng), rng),
                         "tgt": r["native"]})
+        for i, r in enumerate(en_rows):
+            rng = random.Random(f"{seed}-en-{ep}-{i}")
+            text = render(r["toks"], rng, pick(EN_SWAP_MIX, rng))
+            out.append({"src": TASK_PREFIX["en"] + noisy_version(text, pick(ML_INPUT_MIX, rng), rng), "tgt": r["en"]})
+        for i, r in enumerate(mlx_rows):
+            rng = random.Random(f"{seed}-mlx-{ep}-{i}")
+            text = render(r["toks"], rng, pick(MLX_SWAP_MIX, rng))
+            out.append({"src": TASK_PREFIX["ml"] + noisy_version(text, pick(ML_INPUT_MIX, rng), rng), "tgt": r["ml"]})
     return out
+
+
+def sample_rows(rows, n, seed, tag):
+    """n rows (all when n is 0 or larger), chosen reproducibly."""
+    if not n or n >= len(rows):
+        return list(rows)
+    return random.Random(f"{seed}-{tag}").sample(list(rows), n)
 
 
 def build_model(base_path=None, grad_ckpt=False):
@@ -101,6 +127,10 @@ def main(argv=None):
     ap.add_argument("--epochs", type=int, default=EPOCHS)
     ap.add_argument("--lr", type=float, default=LR)
     ap.add_argument("--max-train", type=int, default=0, help="cap rows per task (smoke tests)")
+    ap.add_argument("--en-file", help="en_data.py output: adds the en: task and code-mixed ml: examples")
+    ap.add_argument("--en-max", type=int, default=0, help="English pairs per epoch (0 = all)")
+    ap.add_argument("--mlx-max", type=int, default=40000, help="code-mixed ml: examples per epoch, from pairs with swaps")
+    ap.add_argument("--replay-max", type=int, default=0, help="cap on the clean: and ml: rows per epoch (0 = all)")
     ap.add_argument("--max-steps", type=int, default=-1)
     ap.add_argument("--grad-ckpt", action="store_true")
     ap.add_argument("--auto-batch", action="store_true")
@@ -110,15 +140,23 @@ def main(argv=None):
     ap.add_argument("--tag", default=TAG)
     a = ap.parse_args(argv)
 
-    for f in (a.train_file, a.ml_file):
+    for f in (a.train_file, a.ml_file, *([a.en_file] if a.en_file else [])):
         if not (PROC_DIR / f).exists():
             sys.exit(f"{PROC_DIR / f} missing. Run extra_data.py (train_plus_all) and ours_data.py first.")
     set_seed(a.seed)
     clean_rows = [r["clean"] for r in read_jsonl(PROC_DIR / a.train_file)]
     ml_rows = read_jsonl(PROC_DIR / a.ml_file)
+    en_rows, mlx_rows = [], []
+    if a.en_file:
+        all_en = read_jsonl(PROC_DIR / a.en_file)
+        en_rows = sample_rows(all_en, a.en_max, a.seed, "en")
+        mlx_rows = sample_rows([r for r in all_en if any(sw for _, sw in r["toks"])], a.mlx_max, a.seed, "mlx")
+        clean_rows = sample_rows(clean_rows, a.replay_max, a.seed, "clean")
+        ml_rows = sample_rows(ml_rows, a.replay_max, a.seed, "ml")
     if a.max_train:
         clean_rows, ml_rows = clean_rows[: a.max_train], ml_rows[: a.max_train]
-    examples = build_examples(clean_rows, ml_rows, a.epochs, a.seed)
+        en_rows, mlx_rows = en_rows[: a.max_train], mlx_rows[: a.max_train]
+    examples = build_examples(clean_rows, ml_rows, a.epochs, a.seed, en_rows=en_rows, mlx_rows=mlx_rows)
 
     tok = load_tokenizer("byt5", "base", a.base_path)
     ds = Dataset.from_list(examples)
@@ -204,7 +242,10 @@ def main(argv=None):
     tok.save_pretrained(out / "model")
     if a.resume:
         shutil.rmtree(out / "ckpt", ignore_errors=True)
-    info = {"model": "byt5", "size": "base", "tasks": list(TASK_PREFIX), "task_prefix": TASK_PREFIX,
+    tasks = list(TASK_PREFIX) if a.en_file else ["clean", "ml"]
+    info = {"model": "byt5", "size": "base", "tasks": tasks, "task_prefix": {t: TASK_PREFIX[t] for t in tasks},
+            "base": a.base_path or "google/byt5-base", "en_rows": len(en_rows), "mlx_rows": len(mlx_rows),
+            "en_swap_mix": EN_SWAP_MIX if a.en_file else None, "mlx_swap_mix": MLX_SWAP_MIX if a.en_file else None,
             "noise_mix": NOISE_MIX, "ml_input_mix": ML_INPUT_MIX, "epochs": a.epochs, "train_loss": res.training_loss,
             "first_logged_loss": losses[0], "last_logged_loss": losses[-1], "minutes": round(mins, 2),
             "steps": trainer.state.global_step, "trainable_params": trainable, "total_params": total,

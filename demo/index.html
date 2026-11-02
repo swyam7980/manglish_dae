@@ -54,7 +54,7 @@ output.ml { font-family: var(--ml); font-size: 18px; }
   <header>
     <div>
       <h1>Manglish translator</h1>
-      <p class="lede">Clean up noisy romanised Malayalam, or write it in Malayalam script. This page runs Manglish-Tiny, a 6.5M-parameter model, entirely in your browser: nothing you type leaves your device.</p>
+      <p class="lede"><span id="lede-tasks">Clean up noisy romanised Malayalam, or write it in Malayalam script.</span> This page runs Manglish-Tiny, a small model, entirely in your browser: nothing you type leaves your device.</p>
     </div>
     <nav>
       <a id="results-link" href="../">Results</a>
@@ -69,6 +69,7 @@ output.ml { font-family: var(--ml); font-size: 18px; }
       <div class="seg" role="group" aria-label="Task">
         <button type="button" data-task="clean" aria-pressed="true">Clean Manglish</button>
         <button type="button" data-task="ml" aria-pressed="false">To Malayalam script</button>
+        <button type="button" data-task="en" aria-pressed="false" hidden>To English</button>
       </div>
       <button class="go" id="go" type="button" disabled>Loading model…</button>
     </div>
@@ -89,7 +90,8 @@ ente ammaye ariyooo</textarea></div>
 <script>
 const ORT_DIST = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
 const EXAMPLES = { clean: ['njaaan naaale varummm', 'ente ammaye ariyooo', 'beachhh sidil jogginggg cheyyunna aalukal'],
-                   ml: ['njan nale varum', 'ente veedu', 'kerala sarkkar'] };
+                   ml: ['njan tomorrow varum', 'ente veedu', 'kerala sarkkar'],
+                   en: ['njan tomorrow varum', 'ente veedu evideyaanu', 'naale mazha peyyumo'] };
 const GUARD_MIN_RATIO = 0.6;
 const $ = id => document.getElementById(id);
 let task = 'clean', enc, dec, vocab, cfg, index;
@@ -170,8 +172,12 @@ async function init() {
     if (links.space && !location.hostname.endsWith('hf.space')) { $('space-link').href = links.space; $('space-link').hidden = false; }
     if (links.weights) { $('weights-link').href = links.weights; $('weights-link').hidden = false; }
     ort.env.wasm.wasmPaths = ORT_DIST;
-    status('Downloading the model (about 7 MB)…');
+    status('Downloading the model…');
     [vocab, cfg] = await Promise.all([fetch('model/vocab.json').then(r => r.json()), fetch('model/config.json').then(r => r.json())]);
+    if ('en' in vocab.task_tokens) {  // a model trained with the English task
+      document.querySelector('.seg [data-task="en"]').hidden = false;
+      $('lede-tasks').textContent = 'Clean up noisy romanised Malayalam, write it in Malayalam script, or translate it to English.';
+    }
     index = new Map(vocab.chars.map((c, i) => [c, i + vocab.n_special]));
     [enc, dec] = await Promise.all([ort.InferenceSession.create('model/encoder.int8.onnx'),
                                     ort.InferenceSession.create('model/decoder.int8.onnx')]);

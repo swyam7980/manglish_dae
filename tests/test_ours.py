@@ -45,7 +45,7 @@ def test_build_examples_fresh_noise_per_epoch_and_deterministic():
     a = build_examples(CLEAN, ml, 2, seed=1)
     assert a == build_examples(CLEAN, ml, 2, seed=1)
     assert len(a) == 2 * (len(CLEAN) + len(ml))
-    assert {e["src"].split(":")[0] + ": " for e in a} == set(TASK_PREFIX.values())
+    assert {e["src"].split(":")[0] + ": " for e in a} == {TASK_PREFIX["clean"], TASK_PREFIX["ml"]}  # no en rows given
     first, second = a[: len(CLEAN)], a[len(CLEAN) + len(ml): 2 * len(CLEAN) + len(ml)]
     assert [e["tgt"] for e in first] == [e["tgt"] for e in second]
     assert [e["src"] for e in first] != [e["src"] for e in second]

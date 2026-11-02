@@ -11,9 +11,11 @@ DEST = ROOT / "results"
 TOP = ["metrics_*.json", "preds_*.csv", "analysis_*.md", "summary.csv", "summary.md", "seeds_summary.md",
        "report_data.json", "run_times.json", "comparison.png"]
 STUDY_DIRS = {"combined_all": ["*.csv", "*.json"], "decoding_all": ["decoding_detail.csv", "decoding_summary.*"],
-              "robustness_all": ["*.csv", "*.json"], "ours": ["*.csv", "*.json", "*.md"]}
-DATA_STATS = ["stats.json", "train_plus_all.stats.json", "ours_ml.stats.json"]
-OUR_MODELS = {"ours_byt5": "train_info.json", "ours_tiny": "train_info.json"}  # training records, not weights
+              "robustness_all": ["*.csv", "*.json"], "ours": ["*.csv", "*.json", "*.md"],
+              "ours_en": ["*.csv", "*.json", "*.md"]}
+DATA_STATS = ["stats.json", "train_plus_all.stats.json", "ours_ml.stats.json", "ours_en.stats.json"]
+OUR_MODELS = {"ours_byt5": "train_info.json", "ours_tiny": "train_info.json",  # training records, not weights
+              "ours_byt5_en": "train_info.json", "ours_tiny_en": "train_info.json"}
 
 
 def copy(src, dst):
