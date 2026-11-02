@@ -1,11 +1,13 @@
 """Prepare the two free-hosting folders; uploading them needs your Hugging Face login, so this script only builds them.
 
   outputs/hub/    a Hugging Face model repo: byt5/ (merged Manglish-ByT5), tiny/ (Manglish-Tiny + ONNX), README.md
-  outputs/space/  a Hugging Face Space (Gradio, free CPU) that downloads the weights from that repo
+  outputs/space/  a Hugging Face Space: by default the static browser demo (free); --space-sdk gradio builds a Gradio
+                  app that downloads both models from that repo (Gradio Spaces on free CPU need a PRO account)
 
 Then, once (with a write token from https://huggingface.co/settings/tokens):
   hf auth login
   hf upload <user>/manglish-translator outputs/hub . --repo-type model
+  hf repos create <user>/manglish-translator-demo --type space --space-sdk static
   hf upload <user>/manglish-translator-demo outputs/space . --repo-type space
 """
 import argparse
@@ -69,18 +71,20 @@ style. The noise is synthetic, so real typing errors may differ.
 """
 
 
-def space_readme(repo):
+def space_readme(repo, sdk):
+    app = "app_file: app.py\n" if sdk == "gradio" else ""
+    how = ("Runs both models on the Space's CPU." if sdk == "gradio" else
+           "Manglish-Tiny runs in your browser (onnxruntime-web); nothing is sent to a server.")
     return f"""---
 title: Manglish Translator
 emoji: 🌴
 colorFrom: red
 colorTo: gray
-sdk: gradio
-app_file: app.py
-pinned: false
+sdk: {sdk}
+{app}pinned: false
 license: cc-by-sa-4.0
 ---
-Clean noisy Manglish or write it in Malayalam script. Weights: https://huggingface.co/{repo}
+Clean noisy Manglish or write it in Malayalam script. {how} Weights: https://huggingface.co/{repo}
 """
 
 
@@ -98,6 +102,16 @@ def build_hub(out, repo, github):
     (out / "README.md").write_text(model_card(repo, github), encoding="utf-8")
 
 
+def build_static_space(out, repo):
+    """The browser demo as a static Space (free; Gradio Spaces on free CPU need a PRO account)."""
+    site = OUT_DIR / "demo_site"
+    if not (site / "index.html").exists():
+        sys.exit("Build the demo first (build_demo.py).")
+    shutil.rmtree(out, ignore_errors=True)
+    shutil.copytree(site, out)
+    (out / "README.md").write_text(space_readme(repo, "static"), encoding="utf-8")
+
+
 def build_space(out, repo):
     shutil.rmtree(out, ignore_errors=True)
     (out / "src").mkdir(parents=True)
@@ -107,7 +121,7 @@ def build_space(out, repo):
     (out / "app.py").write_text(app.replace('os.environ.get("MANGLISH_HUB_REPO", "")',
                                             f'os.environ.get("MANGLISH_HUB_REPO", "{repo}")'), encoding="utf-8")
     (out / "requirements.txt").write_text("\n".join(SPACE_REQUIREMENTS) + "\n", encoding="utf-8")
-    (out / "README.md").write_text(space_readme(repo), encoding="utf-8")
+    (out / "README.md").write_text(space_readme(repo, "gradio"), encoding="utf-8")
 
 
 def main(argv=None):
@@ -115,11 +129,13 @@ def main(argv=None):
     ap.add_argument("--repo", required=True, help="Hugging Face model repo id, e.g. yourname/manglish-translator")
     ap.add_argument("--github", default="https://github.com/swyam7980/manglish_dae")
     ap.add_argument("--parts", nargs="+", default=["hub", "space"])
+    ap.add_argument("--space-sdk", choices=["static", "gradio"], default="static",
+                    help="static: free browser demo (Tiny); gradio: both models on CPU, needs Hugging Face PRO")
     a = ap.parse_args(argv)
     if "hub" in a.parts:
         build_hub(OUT_DIR / "hub", a.repo, a.github)
     if "space" in a.parts:
-        build_space(OUT_DIR / "space", a.repo)
+        (build_static_space if a.space_sdk == "static" else build_space)(OUT_DIR / "space", a.repo)
     print(json.dumps({"hub": str(OUT_DIR / "hub"), "space": str(OUT_DIR / "space")}, indent=1))
 
 

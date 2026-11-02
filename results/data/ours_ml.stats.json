@@ -1,0 +1,10 @@
+{
+  "aligned_lines": 10000,
+  "usable_lines": 6482,
+  "unique_sentences": 6462,
+  "train_sentences": 5792,
+  "train_words": 8000,
+  "test_sentences": 658,
+  "dakshina_train_rows": 7639,
+  "dakshina_test_rows": 848
+}

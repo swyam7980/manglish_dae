@@ -15,7 +15,7 @@
   "Two of the three datasets are caption-style (SeLLaI). Dakshina is formal Wikipedia text romanised by hand, with no English mixing, so it tests transfer to a different register.",
   "The 2,059-sentence test set is much larger than the original 325 but still small per source, and exact or near-exact duplicates only are removed between sets.",
   "The robustness and decoding studies use a 600-sentence subsample to keep runtime manageable.",
-  "Denoising only. No translation-quality claim is made."
+  "Denoising only for the comparison. Our own models add a Manglish-to-Malayalam-script task, evaluated on Dakshina's held-out sentences; they ran one seed and trained on the robustness noise types, so their robustness numbers are not comparable with the comparison models'."
  ],
  "devs": [
   "Dataset: three sources, 18,548 training and 2,059 test sentences (20,607 in all, close to the roughly 15,000 in the proposal), not one dataset. The original run used 3,259 Manglish sentences (2,934 train, 325 validation).",
@@ -26,5 +26,25 @@
   "Seeds 43 to 46 were added beyond the proposal's single run, and a second evaluation protocol (the combined test set) beyond the proposal's single validation split.",
   "Noise rates 0.10 and 0.04, a 120-character cap, the mT5 prefix and mBART language code en_XX are choices the proposal leaves open."
  ],
- "saniNote": "Each extra source goes through a sanitiser that repairs what it can (Unicode forms, HTML entities, control and zero-width characters, emoji, URLs, repeated punctuation) and drops what it cannot (non-Latin script, truncated fragments, elongated letters, number-heavy or symbol-heavy lines, gibberish, single words). Over-long lines are split at clause boundaries. 10% of every source is held out for the combined test set, which also contains the original 325 validation sentences, and no test sentence appears in any training file. The original Manglish class is audited but not re-filtered, so earlier results stay comparable."
+ "saniNote": "Each extra source goes through a sanitiser that repairs what it can (Unicode forms, HTML entities, control and zero-width characters, emoji, URLs, repeated punctuation) and drops what it cannot (non-Latin script, truncated fragments, elongated letters, number-heavy or symbol-heavy lines, gibberish, single words). Over-long lines are split at clause boundaries. 10% of every source is held out for the combined test set, which also contains the original 325 validation sentences, and no test sentence appears in any training file. The original Manglish class is audited but not re-filtered, so earlier results stay comparable.",
+ "oursSub": "We used the comparison's findings to train our own translator on the same 18,548 training sentences (no test sentence seen): ByT5-base with a wider LoRA, 4 epochs and fresh noise of all six robustness types every epoch (<strong>Manglish-ByT5</strong>), and a 6.5M-parameter character transformer trained from scratch on the same data (<strong>Manglish-Tiny</strong>, 7 MB in int8, runs in the browser). One model does two tasks by prefix: <code>clean:</code> and <code>ml:</code> (Malayalam script). On the 2,059-sentence combined test both reach <strong>2.3% CER</strong>, against 3.5% for the best comparison model (ByT5 + data); the paired bootstrap difference is −1.3 points (95% CI −1.4 to −1.1). The small model matches the large one here, so the gain comes from the training recipe more than the backbone. Single seed (42).",
+ "oursLinks": [
+  [
+   "Try it in your browser",
+   "demo/",
+   true
+  ],
+  [
+   "Same demo on Hugging Face",
+   "https://huggingface.co/spaces/blackdemon112/manglish-translator-demo",
+   false
+  ],
+  [
+   "Download the weights",
+   "https://huggingface.co/blackdemon112/manglish-translator",
+   false
+  ]
+ ],
+ "oursRobNote": "Same 600-sentence subsample and noise conditions as above. <strong>Not a like-for-like comparison:</strong> our models trained on all six noise types, while the comparison models saw only the base noise, so this shows what training on the noise buys (vowel dropping 8.2% and 7.2% against 18.2% for ByT5 + data; phonetic spellings 2.6% against 17.7%), not that our models generalise better to unseen noise.",
+ "oursMlNote": "658 held-out Dakshina sentences (romanised to native script), never trained on; the inputs are given clean and with base noise. The baseline is a rule-based ITRANS transliterator, which does not know Malayalam spelling conventions, so it is a floor rather than a strong rival. Manglish-Tiny is slightly better than Manglish-ByT5 here (CER 7.6 against 8.7). Script output follows Dakshina's Wikipedia style."
 }

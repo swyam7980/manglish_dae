@@ -165,16 +165,27 @@ types; the comparison models did not, and the page says so.
   gh-pages branch; Manglish-Tiny runs inside the visitor's browser with onnxruntime-web, at
   `https://<user>.github.io/<repository>/demo/`.
 * **Weights:** `python src/publish_hub.py --repo <hf-user>/manglish-translator` builds `outputs/hub/` (both models and
-  a model card) and `outputs/space/` (a Gradio Space). Upload with your own token:
+  a model card) and `outputs/space/` (the same browser demo as a static Space). Upload with your own token:
 
 ```bash
 hf auth login
 hf upload <hf-user>/manglish-translator outputs/hub . --repo-type model
+hf repos create <hf-user>/manglish-translator-demo --type space --space-sdk static
 hf upload <hf-user>/manglish-translator-demo outputs/space . --repo-type space
 ```
 
-  The Space (free CPU) downloads the weights from the model repo on first start and serves both models; then
-  rebuild the demo with `--space` and `--weights` links so the GitHub page points to them.
+  Static Spaces are free; Gradio Spaces on free CPU now need a Hugging Face PRO account. With one,
+  `publish_hub.py --space-sdk gradio` builds a Space that serves both models (it downloads the weights from the model
+  repo). Build the demo with `--results`, `--space` and `--weights` links before `publish_hub.py`, so both copies of
+  the demo point to them.
+
+Published copies: weights at https://huggingface.co/blackdemon112/manglish-translator, demo at
+https://huggingface.co/spaces/blackdemon112/manglish-translator-demo and https://swyam7980.github.io/manglish_dae/demo/.
+
+**Results** (single seed; full tables in `results/ours/ours_summary.md`): on the 2,059-sentence combined test both models
+reach 2.3% CER against 3.5% for the best comparison model (ByT5 + data); Manglish to Malayalam script on 658 held-out
+Dakshina sentences: CER 8.7 (ByT5) and 7.6 (Tiny) against 38.2 for a rule-based transliterator. Our models trained on
+the robustness noise types, so their robustness scores are not comparable with the comparison models'.
 
 ## Tests
 

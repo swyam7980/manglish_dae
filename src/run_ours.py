@@ -31,7 +31,8 @@ def main(argv=None):
     a = ap.parse_args(argv)
     logs = WORK / "logs"
     logs.mkdir(exist_ok=True)
-    env = {**os.environ, "PYTHONUNBUFFERED": "1", "HF_HUB_OFFLINE": os.environ.get("HF_HUB_OFFLINE", "1")}
+    env = {**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONIOENCODING": "utf-8",  # Malayalam in a cp1252 console
+           "HF_HUB_OFFLINE": os.environ.get("HF_HUB_OFFLINE", "1")}
     times = {}
     for name in a.steps:
         cmd, done = STEPS[name]

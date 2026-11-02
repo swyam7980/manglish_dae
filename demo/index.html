@@ -57,8 +57,8 @@ output.ml { font-family: var(--ml); font-size: 18px; }
       <p class="lede">Clean up noisy romanised Malayalam, or write it in Malayalam script. This page runs Manglish-Tiny, a 6.5M-parameter model, entirely in your browser: nothing you type leaves your device.</p>
     </div>
     <nav>
-      <a href="../">Results</a>
-      <a id="space-link" href="#" hidden>Full model (ByT5)</a>
+      <a id="results-link" href="../">Results</a>
+      <a id="space-link" href="#" hidden>Hugging Face Space</a>
       <a id="weights-link" href="#" hidden>Weights</a>
       <button class="theme" id="theme" type="button">Theme</button>
     </nav>
@@ -82,7 +82,7 @@ ente ammaye ariyooo</textarea></div>
     <div class="status" id="status"></div>
   </section>
 
-  <p class="note">Trained on the same 18,548 training sentences (SeLLaI Manglish, SeLLaI Mixed-Code, Dakshina) used to compare mBART-50, mT5 and ByT5, plus Dakshina's Malayalam-script pairs. The larger Manglish-ByT5 model is more accurate; see the results page for scores on the held-out test set.</p>
+  <p class="note">Trained on the same 18,548 training sentences (SeLLaI Manglish, SeLLaI Mixed-Code, Dakshina) used to compare mBART-50, mT5 and ByT5, plus Dakshina's Malayalam-script pairs. On the 2,059-sentence held-out test it is as accurate as the 580M-parameter Manglish-ByT5 (2.3% character error for both); to run ByT5, download the weights and use the project's local interface.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
@@ -166,7 +166,8 @@ async function init() {
   };
   try {
     const links = await fetch('links.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
-    if (links.space) { $('space-link').href = links.space; $('space-link').hidden = false; }
+    if (links.results) $('results-link').href = links.results;
+    if (links.space && !location.hostname.endsWith('hf.space')) { $('space-link').href = links.space; $('space-link').hidden = false; }
     if (links.weights) { $('weights-link').href = links.weights; $('weights-link').hidden = false; }
     ort.env.wasm.wasmPaths = ORT_DIST;
     status('Downloading the model (about 7 MB)…');
