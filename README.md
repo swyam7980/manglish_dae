@@ -180,6 +180,24 @@ python translate.py --task en "njan tomorrow varum"
 code-mixed Manglish, against a pipeline that writes Malayalam script with our model and then translates it with
 NLLB-200 (a baseline only; it is CC BY-NC and is not redistributed). Results go to `results/ours_en/`.
 
+Results (single seed): script writing improved and English words in the script task are translated more often, but
+direct English is weak.
+
+| IN22 conversation, typed Manglish | BLEU | chrF |
+|---|---|---|
+| Manglish-Tiny + English script, then NLLB-200 | 22.1 | 47.6 |
+| Manglish-ByT5 + English, direct | 9.3 | 33.3 |
+| Manglish-Tiny + English, direct | 4.1 | 27.2 |
+| NLLB-200 on the real Malayalam (ceiling) | 26.3 | 50.8 |
+
+| Script task | Dakshina CER, clean / noisy input | English words translated (807 IN22 sentences) |
+|---|---|---|
+| Manglish-ByT5 / + English | 8.74 / 12.29 → 9.76 / 12.68 | 14.9% → 24.3% |
+| Manglish-Tiny / + English | 7.60 / 11.02 → 7.43 / 10.56 | 16.9% → 35.3% |
+
+Cleaning stays at 2.3% CER on the combined test for all four models. The direct English is usable for short everyday
+sentences only; the hosted demo labels it "rough".
+
 ### Free hosting
 
 * **Browser demo (no server):** `python src/build_demo.py` then `python src/publish_pages.py` adds `demo/` to the

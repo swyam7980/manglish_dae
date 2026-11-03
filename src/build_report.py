@@ -143,6 +143,11 @@ BODY = r"""<script>try { const t = localStorage.getItem("manglish-theme"); if (t
       <div class="panel"><h3>Under heavier and different noise (CER %, 600 sentences)</h3><table id="oursrob"></table><p class="note" id="oursrob-note"></p></div>
       <div class="panel"><h3>Manglish to Malayalam script, held-out Dakshina sentences</h3><table id="oursml"></table><p class="note" id="oursml-note"></p></div>
     </div>
+    <p class="sub" id="ours-en-sub"></p>
+    <div class="cols2" id="ours-en" hidden>
+      <div class="panel"><h3>Manglish to English, IN22 benchmark (BLEU / chrF, higher is better)</h3><table id="oursen"></table><p class="note" id="oursen-note"></p></div>
+      <div class="panel"><h3>English words typed into Manglish, script task (807 IN22 sentences)</h3><table id="oursmix"></table><p class="note" id="oursmix-note"></p></div>
+    </div>
     <div class="panel"><h3>How they were trained</h3><table id="ourstrain"></table></div>
   </section>
 
@@ -261,7 +266,8 @@ const SHORT = {mbart_large: 'mBART-50', byt5_base: 'ByT5-base', 'mt5_base_lr1e-3
 const CN = {mbart: 'mBART-50', byt5: 'ByT5-base', 'mt5_lr1e-3': 'mT5, LR 1e-3', mt5: 'mT5, LR 2e-4', mbart_plusall: 'mBART-50 + data',
   byt5_plusall: 'ByT5 + data', mt5_plusall: 'mT5, LR 2e-4 + data', 'mt5_lr1e-3_plusall': 'mT5, LR 1e-3 + data',
   copy_input: 'copy the input', rule_collapse_runs: 'rule-based cleaner', ours_byt5: 'Manglish-ByT5 (ours)',
-  ours_tiny: 'Manglish-Tiny (ours)', rule_transliteration: 'rule-based transliterator'};
+  ours_tiny: 'Manglish-Tiny (ours)', rule_transliteration: 'rule-based transliterator',
+  ours_byt5_en: 'Manglish-ByT5 + English (ours)', ours_tiny_en: 'Manglish-Tiny + English (ours)'};
 const NEURAL = ['mbart', 'byt5', 'mt5_lr1e-3', 'mt5', 'mbart_plusall', 'byt5_plusall', 'mt5_lr1e-3_plusall', 'mt5_plusall'];
 const SRC_NAME = {ALL: 'All sources', sellai_manglish: 'SeLLaI Manglish', 'sellai_mixed-code': 'SeLLaI Mixed-Code', dakshina_ml: 'Dakshina'};
 const short = k => SHORT[k] || k;
@@ -570,7 +576,7 @@ function renderCompute() {
   el('compute-sub').textContent = `Everything ran on one ${gpu} with ${gb} GB of memory: ${fmt(R.training_minutes / 60, 1)} hours of training in ${R.runs.length} runs and ${fmt(R.step_minutes / 60, 1)} hours of evaluation and studies, ${fmt((R.training_minutes + R.step_minutes) / 60, 1)} hours in all. Runs on the larger data take 3,480 steps instead of 552, and use the largest micro-batch that fits in memory; the effective batch is 16 in every run.`;
 }
 
-const OURS = ['ours_byt5', 'ours_tiny'];
+const OURS = ['ours_byt5', 'ours_tiny', 'ours_byt5_en', 'ours_tiny_en'];
 function renderOurs() {
   const O = X.ours; if (!O || !O.combined) return;
   el('ours').hidden = false;
@@ -612,12 +618,43 @@ function renderOurs() {
     el('oursml').innerHTML = t + '</tbody>';
     el('oursml-note').innerHTML = C.oursMlNote || '';
   }
-  const T = [['ours_byt5', X.ours_train_byt5], ['ours_tiny', X.ours_train_tiny]].filter(([, i]) => i);
+  const E = X.ours_en;
+  if (E && E.en) {
+    el('ours-en').hidden = false;
+    const EL = {pivot_ours_byt5: 'Manglish-ByT5 script, then NLLB-200', pivot_ours_byt5_en: 'Manglish-ByT5 + English script, then NLLB-200',
+      pivot_ours_tiny_en: 'Manglish-Tiny + English script, then NLLB-200', ours_byt5_en: 'Manglish-ByT5 + English, direct',
+      direct_ours_tiny_en: 'Manglish-Tiny + English, direct', nllb_gold: 'NLLB-200 on the real Malayalam (ceiling)'};
+    const sets = [['in22_conv', 'conversation'], ['in22_gen', 'general']].filter(([k]) => E.en[k]);
+    const sys = Object.keys(EL).filter(k => sets.some(([st]) => E.en[st][k]));
+    const cell = v => v ? `${fmt(v.BLEU, 1)} / ${fmt(v.chrF, 1)}` : '';
+    let t = '<thead><tr><th>System</th>' + sets.map(([, n]) => `<th>${n}, typed Manglish</th><th>${n}, noisy</th>`).join('') + '</tr></thead><tbody>';
+    sys.forEach(k => {
+      t += `<tr><td>${dot(k.replace(/^(pivot_|direct_)/, ''))}${EL[k]}</td>` + sets.map(([st]) => {
+        const v = E.en[st][k];
+        if (k === 'nllb_gold') return `<td class="num" colspan="2">${cell(v)} <span class="sd">(Malayalam input)</span></td>`;
+        return `<td class="num">${cell(v && v.roman)}</td><td class="num">${cell(v && v.noisy)}</td>`;
+      }).join('') + '</tr>';
+    });
+    el('oursen').innerHTML = t + '</tbody>';
+    el('oursen-note').innerHTML = C.oursEnNote || '';
+    if (E.mixed) {
+      let m = '<thead><tr><th>System</th><th>English words translated</th><th>CER % (with English words)</th><th>CER % (same sentences, all Manglish)</th></tr></thead><tbody>';
+      OURS.filter(k => E.mixed[k]).forEach(k => {
+        const v = E.mixed[k];
+        m += `<tr><td>${dot(k)}${cname(k)}</td><td class="num">${fmt(v.translated_pct, 1)}%</td><td class="num">${fmt(v.mixed_all.CER)}</td><td class="num">${fmt(v.plain_all.CER)}</td></tr>`;
+      });
+      el('oursmix').innerHTML = m + '</tbody>';
+      el('oursmix-note').innerHTML = C.oursMixNote || '';
+    }
+  }
+  const T = [['ours_byt5', X.ours_train_byt5], ['ours_tiny', X.ours_train_tiny], ['ours_byt5_en', X.ours_train_byt5_en],
+    ['ours_tiny_en', X.ours_train_tiny_en]].filter(([, i]) => i);
   let tr = '<thead><tr><th>Model</th><th>Parameters</th><th>Trained</th><th>Examples seen</th><th>Minutes</th><th>Peak GPU GB</th></tr></thead><tbody>';
   T.forEach(([k, i]) => {
-    const params = k === 'ours_byt5' ? `${(i.total_params / 1e6).toFixed(0)}M <span class="sd">(${(i.trainable_params / 1e6).toFixed(1)}M LoRA)</span>` : `${(i.params / 1e6).toFixed(1)}M`;
-    const how = k === 'ours_byt5' ? `${i.epochs} epochs, LoRA r ${i.lora_r}, merged` : `${i.epochs} epochs from scratch`;
-    const seen = k === 'ours_byt5' ? i.examples : i.epochs * (i.clean_rows + i.ml_rows);
+    const big = k.indexOf('ours_byt5') === 0;
+    const params = big ? `${(i.total_params / 1e6).toFixed(0)}M <span class="sd">(${(i.trainable_params / 1e6).toFixed(1)}M LoRA)</span>` : `${(i.params / 1e6).toFixed(1)}M`;
+    const how = big ? `${i.epochs} epoch${i.epochs > 1 ? 's' : ''}${i.en_rows ? ' more, from Manglish-ByT5' : ''}, LoRA r ${i.lora_r}, merged` : `${i.epochs} epochs from scratch`;
+    const seen = big ? i.examples : i.epochs * (i.clean_rows + i.ml_rows + (i.en_rows || 0) + (i.mlx_rows || 0));
     tr += `<tr><td>${dot(k)}${cname(k)}</td><td class="num">${params}</td><td class="num">${how}</td><td class="num">${seen.toLocaleString()}</td><td class="num">${fmt(i.minutes, 1)}</td><td class="num">${i.peak_gpu_gb === null ? '-' : fmt(i.peak_gpu_gb)}</td></tr>`;
   });
   el('ourstrain').innerHTML = tr + '</tbody>';
@@ -632,7 +669,7 @@ function fillCopy() {
   el('recotext').innerHTML = C.reco;
   el('limitlist').innerHTML = C.limits.map(x => `<li>${x}</li>`).join('');
   el('devs').innerHTML = C.devs.map(x => `<li>${x}</li>`).join('');
-  [['oursSub', 'ours-sub'], ['dataSub', 'data-sub'], ['saniNote', 'sani-note'], ['moreSub', 'more-sub'], ['combSub', 'comb-sub'], ['robSub', 'rob-sub'], ['decSub', 'dec-sub']].forEach(([k, id]) => { if (C[k]) el(id).innerHTML = C[k]; });
+  [['oursSub', 'ours-sub'], ['oursEnSub', 'ours-en-sub'], ['dataSub', 'data-sub'], ['saniNote', 'sani-note'], ['moreSub', 'more-sub'], ['combSub', 'comb-sub'], ['robSub', 'rob-sub'], ['decSub', 'dec-sub']].forEach(([k, id]) => { if (C[k]) el(id).innerHTML = C[k]; });
 }
 
 function renderCharts() {
@@ -655,7 +692,9 @@ el('themebtn').onclick = () => {
 EXTRA_FILES = (("combined", "combined_all/combined_summary.json"), ("robustness", "robustness_all/robustness.json"),
                ("decoding", "decoding_all/decoding_summary.json"), ("data", "data/train_plus_all.stats.json"),
                ("profile", "data/dataset_profile.json"), ("runs", "run_times.json"), ("ours", "ours/ours_summary.json"),
-               ("ours_train_byt5", "ours/train_info_ours_byt5.json"), ("ours_train_tiny", "ours/train_info_ours_tiny.json"))
+               ("ours_train_byt5", "ours/train_info_ours_byt5.json"), ("ours_train_tiny", "ours/train_info_ours_tiny.json"),
+               ("ours_train_byt5_en", "ours/train_info_ours_byt5_en.json"),
+               ("ours_train_tiny_en", "ours/train_info_ours_tiny_en.json"), ("ours_en", "ours_en/en_summary.json"))
 
 
 def main(argv=None):

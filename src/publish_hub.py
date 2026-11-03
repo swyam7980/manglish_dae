@@ -92,7 +92,10 @@ training data includes CC BY-SA material, the weights are released under CC BY-S
 ## Results on the project's held-out test sets
 {results_table()}
 ## Limits
-Manglish output is lower-cased; trained on short sentences (up to about 140 characters). The Manglish inputs of the
+Direct English (`en:`) is rough: fine for short everyday sentences, garbled on long ones, and far behind writing script with
+`ml:` and translating that with a dedicated Malayalam-English translator (the NLLB-200 rows above; NLLB-200 is CC BY-NC
+and not included here). Manglish-Tiny's English is weaker than Manglish-ByT5's. About a third of English words typed into
+Manglish become Malayalam words in `ml:`; the rest are transliterated. Manglish output is lower-cased; trained on short sentences (up to about 140 characters). The Manglish inputs of the
 English task are generated from Malayalam text, so real chat Manglish (and its English mixing) may differ; most English
 training pairs are formal (health, tourism, Wikipedia, government), with a smaller conversational share. The noise is
 synthetic, so real typing errors may differ.

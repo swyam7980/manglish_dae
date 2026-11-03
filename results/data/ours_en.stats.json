@@ -1,0 +1,35 @@
+{
+  "read": {
+    "bpcc_daily": 8401,
+    "bpcc_massive": 16500,
+    "bpcc_seed": 98031,
+    "bpcc_ilci": 87927,
+    "bpcc_wiki": 41621,
+    "pmindia": 33669,
+    "opus_tatoeba": 803,
+    "opus_wikimedia": 102010
+  },
+  "kept": {
+    "bpcc_daily": 7975,
+    "bpcc_massive": 11110,
+    "bpcc_seed": 73078,
+    "bpcc_ilci": 65607,
+    "bpcc_wiki": 8900,
+    "pmindia": 21420,
+    "opus_tatoeba": 780,
+    "opus_wikimedia": 23515
+  },
+  "dropped": {
+    "too_short_or_long": 130437,
+    "empty_or_wrong_script": 13570,
+    "duplicate": 32507,
+    "test_overlap": 63
+  },
+  "train_pairs": 212385,
+  "test_pairs": 2527,
+  "dictionary_size": 14097,
+  "lexicon_words": 24890,
+  "lexicon_coverage": 0.517,
+  "swappable_pairs": 169607,
+  "test_with_swaps": 807
+}

@@ -35,9 +35,13 @@ MODELS = {"ours_byt5": ("byt5", OUT_DIR / "ours_byt5" / "model"),
           "ours_byt5_en": ("byt5", OUT_DIR / "ours_byt5_en" / "model"),
           "ours_tiny": ("tiny", OUT_DIR / "ours_tiny"),
           "ours_tiny_en": ("tiny", OUT_DIR / "ours_tiny_en")}
+DIRECT = ("ours_byt5_en", "ours_tiny_en")
+PIVOT = ("ours_byt5", "ours_byt5_en", "ours_tiny_en")
 LABELS = {"ours_byt5_en": "Manglish-ByT5 + English (ours), direct",
           "pivot_ours_byt5": "Manglish-ByT5 script, then NLLB-200",
           "pivot_ours_byt5_en": "Manglish-ByT5 + English script, then NLLB-200",
+          "pivot_ours_tiny_en": "Manglish-Tiny + English script, then NLLB-200",
+          "direct_ours_tiny_en": "Manglish-Tiny + English (ours), direct",
           "nllb_gold": "NLLB-200 on the real Malayalam (ceiling)",
           "ours_byt5": "Manglish-ByT5 (before English)", "ours_tiny": "Manglish-Tiny (before English)",
           "ours_tiny_en": "Manglish-Tiny + English (ours)"}
@@ -101,6 +105,8 @@ def main(argv=None):
     ap.add_argument("--max-eval", type=int, default=0, help="cap sentences per set (smoke tests)")
     ap.add_argument("--out", default="ours_en")
     ap.add_argument("--device", choices=["cuda", "cpu"])
+    ap.add_argument("--direct", nargs="+", default=list(DIRECT), help="our models translating to English themselves")
+    ap.add_argument("--pivot", nargs="+", default=list(PIVOT), help="our script models put in front of NLLB-200")
     a = ap.parse_args(argv)
     out = RES_DIR / a.out
     out.mkdir(parents=True, exist_ok=True)
@@ -115,7 +121,7 @@ def main(argv=None):
     if "en" in a.parts:
         # script first (one model in memory at a time), then NLLB over every script output, then our direct model
         script = {}
-        for name in ("ours_byt5", "ours_byt5_en"):
+        for name in a.pivot:
             if name not in present:
                 continue
             tr = Translator(*present[name], device=dev, guard=False)
@@ -131,11 +137,15 @@ def main(argv=None):
         gold = {s: nllb.translate([r["ml"] for r in rs], a.batch) for s, rs in by_set.items()}
         del nllb
         torch.cuda.empty_cache()
-        if "ours_byt5_en" in present:
-            tr = Translator(*present["ours_byt5_en"], device=dev, guard=False)
-            for s, rs in by_set.items():
-                for inp in INPUTS:
-                    preds[("ours_byt5_en", s, inp)] = tr.translate([r[inp] for r in rs], "en", a.batch)
+        for name in a.direct:
+            if name not in present:
+                continue
+            tr = Translator(*present[name], device=dev, guard=False)
+            if "en" in tr.tasks:
+                key = name if name == "ours_byt5_en" else f"direct_{name}"  # ours_byt5_en keeps its earlier key
+                for s, rs in by_set.items():
+                    for inp in INPUTS:
+                        preds[(key, s, inp)] = tr.translate([r[inp] for r in rs], "en", a.batch)
             del tr
             torch.cuda.empty_cache()
 
@@ -143,7 +153,9 @@ def main(argv=None):
         for s, rs in by_set.items():
             refs = [r["en"] for r in rs]
             res.setdefault(s, {})["nllb_gold"] = {"input": "real Malayalam", **en_scores(gold[s], refs)}
-            frame = {"ml": [r["ml"] for r in rs], "en": refs, "nllb_gold": gold[s]}
+            csv = out / f"preds_en_{s}.csv"
+            frame = pd.read_csv(csv).to_dict("list") if csv.exists() else {}  # keep columns of systems not rerun
+            frame.update({"ml": [r["ml"] for r in rs], "en": refs, "nllb_gold": gold[s]})
             for inp in INPUTS:
                 frame[f"in_{inp}"] = [r[inp] for r in rs]
             chrf = {}
@@ -156,18 +168,23 @@ def main(argv=None):
             for (name, s2, inp), ml in script.items():
                 if s2 == s:
                     frame[f"script_{name}__{inp}"] = ml
-            pd.DataFrame(frame).to_csv(out / f"preds_en_{s}.csv", index=False)
+            pd.DataFrame(frame).to_csv(csv, index=False)
+            for name in res[s]:  # sentence chrF of systems scored in an earlier run, from their saved predictions
+                for inp in INPUTS:
+                    if (name, inp) not in chrf and f"{name}__{inp}" in frame:
+                        chrf[(name, inp)] = sentence_chrf([str(x) for x in frame[f"{name}__{inp}"]], refs)
             vs = res[s].setdefault("vs", [])
             vs.clear()
+            directs = [k for k in ("ours_byt5_en", "direct_ours_tiny_en") if k in res[s]]
+            pivots = [k for k in res[s] if k.startswith("pivot_")]
             for inp in INPUTS:
-                if ("ours_byt5_en", inp) not in chrf:
-                    continue
-                for other in ("pivot_ours_byt5", "pivot_ours_byt5_en"):
-                    if (other, inp) in chrf:
-                        m, lo, hi = boot(chrf[("ours_byt5_en", inp)], chrf[(other, inp)], rng)
-                        vs.append({"input": inp, "other": other, "mean": m, "lo": lo, "hi": hi})
-                        print(f"[{s}/{inp}] sentence chrF, direct - {other}: {m:+.2f} ({lo:+.2f} to {hi:+.2f})",
-                              flush=True)
+                for d in directs:
+                    for other in pivots:
+                        if (d, inp) in chrf and (other, inp) in chrf:
+                            m, lo, hi = boot(chrf[(d, inp)], chrf[(other, inp)], rng)
+                            vs.append({"input": inp, "direct": d, "other": other, "mean": m, "lo": lo, "hi": hi})
+                            print(f"[{s}/{inp}] sentence chrF, {d} - {other}: {m:+.2f} ({lo:+.2f} to {hi:+.2f})",
+                                  flush=True)
             print(s, json.dumps({k: v for k, v in res[s].items() if k != "vs"}), flush=True)
 
     if "mixed" in a.parts:
@@ -216,8 +233,8 @@ def write_markdown(s, path):
                 lines.append(f"| {LABELS['nllb_gold']} | {g['BLEU']:.1f} / {g['chrF']:.1f} (any input) | | |")
             if r.get("vs"):
                 lines += ["", "Paired bootstrap on mean sentence chrF, direct model minus pipeline (positive favours ours):", ""]
-                lines += [f"- {v['input']}: vs {v['other']}: {v['mean']:+.2f} (95% CI {v['lo']:+.2f} to {v['hi']:+.2f})"
-                          for v in r["vs"]]
+                lines += [f"- {v['input']}: {LABELS.get(v.get('direct', 'ours_byt5_en'))} vs {LABELS.get(v['other'])}: "
+                          f"{v['mean']:+.2f} (95% CI {v['lo']:+.2f} to {v['hi']:+.2f})" for v in r["vs"]]
             lines.append("")
     if "mixed" in s:
         m = s["mixed"]
