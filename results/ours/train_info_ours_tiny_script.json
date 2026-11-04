@@ -1,0 +1,47 @@
+{
+  "params": 20667264,
+  "vocab": 927,
+  "epochs": 2,
+  "steps": 3824,
+  "batch": 128,
+  "lr": 0.0003,
+  "best_dev_loss": 1.1125,
+  "minutes": 66.95,
+  "seed": 42,
+  "peak_gpu_gb": 8.51,
+  "clean_rows": 18548,
+  "ml_rows": 13792,
+  "en_rows": 0,
+  "mlx_rows": 212385,
+  "tasks": [
+    "clean",
+    "ml"
+  ],
+  "arch": {
+    "d_model": 384,
+    "heads": 6,
+    "enc_layers": 6,
+    "dec_layers": 4,
+    "ff": 1536,
+    "dropout": 0.1
+  },
+  "init_from": "ours_tiny_en",
+  "script_only": true,
+  "mlx_swap_mix": {
+    "0.0": 0.5,
+    "0.3": 0.25,
+    "0.6": 0.25
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.1584,
+      "dev_loss": 1.1211
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.1363,
+      "dev_loss": 1.1125
+    }
+  ]
+}

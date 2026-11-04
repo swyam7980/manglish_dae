@@ -6,7 +6,7 @@
     python translate.py --task clean --file in.txt --out out.txt
 
 --model byt5 loads outputs/ours_byt5_en/model when it exists (the model that also does en:), else outputs/ours_byt5/model
-(or --model-dir, e.g. a folder downloaded from the Hugging Face Hub); --model tiny loads outputs/ours_tiny_en when it
+(or --model-dir, e.g. a folder downloaded from the Hugging Face Hub); --model tiny loads outputs/ours_tiny_script (else ours_tiny_en) when it
 exists, else outputs/ours_tiny. Clean-task outputs from ByT5 go through the length guard from the comparison.
 """
 import argparse
@@ -23,7 +23,7 @@ from tiny_model import load_tiny, pad_batch
 
 TASKS = ("clean", "ml", "en")
 BYT5_DIRS = [OUT_DIR / "ours_byt5_en" / "model", OUT_DIR / "ours_byt5" / "model"]
-TINY_DIRS = [OUT_DIR / "ours_tiny_en", OUT_DIR / "ours_tiny"]
+TINY_DIRS = [OUT_DIR / "ours_tiny_script", OUT_DIR / "ours_tiny_en", OUT_DIR / "ours_tiny"]
 DEFAULT_DIRS = {"byt5": next((d for d in BYT5_DIRS if (d / "config.json").exists()), BYT5_DIRS[-1]),
                 "tiny": next((d for d in TINY_DIRS if (d / "model.pt").exists()), TINY_DIRS[-1])}
 BYT5_PREFIX = {"clean": "clean: ", "ml": "ml: ", "en": "en: "}

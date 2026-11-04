@@ -1,5 +1,5 @@
 """Assemble the browser demo: demo/index.html -> outputs/demo_site/. The site holds no model; visitors load
-Manglish-Tiny's int8 ONNX files (outputs/ours_tiny_en/onnx) from their own PC with the page's folder picker.
+Manglish-Tiny's int8 ONNX files (outputs/ours_tiny_script/onnx) from their own PC with the page's folder picker.
 
 publish_pages.py --demo outputs/demo_site then puts it on the gh-pages branch under demo/, next to the results page.
 --results adds a link to the results page (written to links.json).

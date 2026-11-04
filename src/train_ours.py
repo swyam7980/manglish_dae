@@ -48,6 +48,8 @@ ML_INPUT_MIX = {"none": 0.50, "base": 0.35, "phonetic": 0.15}
 # share of swappable Malayalam words written in English: en inputs are often all Manglish, mixed ml inputs never are
 EN_SWAP_MIX = {0.0: 0.4, 0.2: 0.3, 0.5: 0.3}
 MLX_SWAP_MIX = {0.3: 0.5, 0.6: 0.5}
+# script-only training (English goes to a separate translator): plain Manglish too, which is most of what people type
+SCRIPT_SWAP_MIX = {0.0: 0.5, 0.3: 0.25, 0.6: 0.25}
 MAX_SRC = 192             # bytes; elongated noisy input can pass the 128 of the comparison
 MAX_TGT = 384             # Malayalam is 3 bytes per character in UTF-8 (longest test target is 357)
 EPOCHS = 4
@@ -75,7 +77,7 @@ def pick(mix, rng):
     return next(reversed(mix))
 
 
-def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_rows=(), mlx_rows=()):
+def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_rows=(), mlx_rows=(), mlx_mix=MLX_SWAP_MIX):
     """Fresh noise for every epoch, deterministic in (seed, epoch, row): a resumed run sees the same data.
     en_rows/mlx_rows are en_data.py rows; each epoch draws a new spelling per word and a new set of English swaps."""
     from en_data import render
@@ -94,7 +96,7 @@ def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_row
             out.append({"src": TASK_PREFIX["en"] + noisy_version(text, pick(ML_INPUT_MIX, rng), rng), "tgt": r["en"]})
         for i, r in enumerate(mlx_rows):
             rng = random.Random(f"{seed}-mlx-{ep}-{i}")
-            text = render(r["toks"], rng, pick(MLX_SWAP_MIX, rng))
+            text = render(r["toks"], rng, pick(mlx_mix, rng))
             out.append({"src": TASK_PREFIX["ml"] + noisy_version(text, pick(ML_INPUT_MIX, rng), rng), "tgt": r["ml"]})
     return out
 

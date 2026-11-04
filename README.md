@@ -207,7 +207,14 @@ that into English. `eval_translators.py` compared the candidates on the same IN2
 | NLLB-200 distilled (CC BY-NC, baseline only) | 23.3 / 48.6 | 26.9 / 51.5 | 17.4 / 43.5 | 31.6 / 59.4 |
 | Opus-MT ml-en (Apache 2.0) | 10.8 / 32.2 | 13.8 / 34.7 | 4.7 / 23.9 | 5.8 / 28.6 |
 
-The gap between typed Manglish and real Malayalam comes from errors in our script step. To run the chain:
+The gap between typed Manglish and real Malayalam comes from errors in our script step, so the script model was then
+retrained for it: `train_tiny.py --en-file ours_en_train.jsonl --script-only --mlx-max 0 --init-from ours_tiny_en --tag
+ours_tiny_script --epochs 2 --lr 3e-4` continues from Manglish-Tiny + English with the English task dropped and every
+one of the 212,000 pairs as a script example, half of them plain Manglish (67 minutes). Through IndicTrans2 1B it raises
+typed Manglish to 27.3 BLEU on conversation and 23.2 on general (from 26.6 and 21.9; bootstrap on sentence chrF +0.6,
+95% CI +0.2 to +1.0, and +1.2, +0.9 to +1.5), cleans with 2.20% CER, writes script with 7.51 / 10.14% CER from clean /
+noisy input, and turns 41% of English words into the right Malayalam word (35% before). It is now the default Tiny.
+To run the chain:
 
 ```bash
 pip install --target .deps_mt --no-deps -r requirements-translator.txt
@@ -240,7 +247,7 @@ hf upload <hf-user>/manglish-translator-demo outputs/space . --repo-type space
   the demo point to them.
 
 The weights are not published yet. The demo at https://swyam7980.github.io/manglish_dae/demo/ holds no model: it asks
-for the model folder on your PC (`outputs/ours_tiny_en/onnx`) and runs it in the browser.
+for the model folder on your PC (`outputs/ours_tiny_script/onnx`) and runs it in the browser.
 
 **Results** (single seed; full tables in `results/ours/ours_summary.md`): on the 2,059-sentence combined test both models
 reach 2.3% CER against 3.5% for the best comparison model (ByT5 + data); Manglish to Malayalam script on 658 held-out

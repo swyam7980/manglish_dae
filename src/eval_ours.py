@@ -26,10 +26,12 @@ from seeds import bootstrap_diff, COMBINED_BOOT
 from translate import Translator
 
 LABELS = {"ours_byt5": "Manglish-ByT5 (ours)", "ours_tiny": "Manglish-Tiny (ours)",
-          "ours_byt5_en": "Manglish-ByT5 + English (ours)", "ours_tiny_en": "Manglish-Tiny + English (ours)"}
-KINDS = {"ours_byt5": "byt5", "ours_tiny": "tiny", "ours_byt5_en": "byt5", "ours_tiny_en": "tiny"}
+          "ours_byt5_en": "Manglish-ByT5 + English (ours)", "ours_tiny_en": "Manglish-Tiny + English (ours)",
+          "ours_tiny_script": "Manglish-Tiny, script-focused (ours)"}
+KINDS = {"ours_byt5": "byt5", "ours_tiny": "tiny", "ours_byt5_en": "byt5", "ours_tiny_en": "tiny", "ours_tiny_script": "tiny"}
 DIRS = {"ours_byt5": OUT_DIR / "ours_byt5" / "model", "ours_tiny": OUT_DIR / "ours_tiny",
-        "ours_byt5_en": OUT_DIR / "ours_byt5_en" / "model", "ours_tiny_en": OUT_DIR / "ours_tiny_en"}
+        "ours_byt5_en": OUT_DIR / "ours_byt5_en" / "model", "ours_tiny_en": OUT_DIR / "ours_tiny_en",
+        "ours_tiny_script": OUT_DIR / "ours_tiny_script"}
 COMPARE_WITH = ["byt5_plusall", "mbart_plusall", "mt5_lr1e-3_plusall", "byt5", "mbart"]
 ROB_SAMPLE = 600
 

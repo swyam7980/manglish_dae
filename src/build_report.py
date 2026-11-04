@@ -268,7 +268,8 @@ const CN = {mbart: 'mBART-50', byt5: 'ByT5-base', 'mt5_lr1e-3': 'mT5, LR 1e-3', 
   byt5_plusall: 'ByT5 + data', mt5_plusall: 'mT5, LR 2e-4 + data', 'mt5_lr1e-3_plusall': 'mT5, LR 1e-3 + data',
   copy_input: 'copy the input', rule_collapse_runs: 'rule-based cleaner', ours_byt5: 'Manglish-ByT5 (ours)',
   ours_tiny: 'Manglish-Tiny (ours)', rule_transliteration: 'rule-based transliterator',
-  ours_byt5_en: 'Manglish-ByT5 + English (ours)', ours_tiny_en: 'Manglish-Tiny + English (ours)'};
+  ours_byt5_en: 'Manglish-ByT5 + English (ours)', ours_tiny_en: 'Manglish-Tiny + English (ours)',
+  ours_tiny_script: 'Manglish-Tiny, script-focused (ours)'};
 const NEURAL = ['mbart', 'byt5', 'mt5_lr1e-3', 'mt5', 'mbart_plusall', 'byt5_plusall', 'mt5_lr1e-3_plusall', 'mt5_plusall'];
 const SRC_NAME = {ALL: 'All sources', sellai_manglish: 'SeLLaI Manglish', 'sellai_mixed-code': 'SeLLaI Mixed-Code', dakshina_ml: 'Dakshina'};
 const short = k => SHORT[k] || k;
@@ -577,7 +578,7 @@ function renderCompute() {
   el('compute-sub').textContent = `Everything ran on one ${gpu} with ${gb} GB of memory: ${fmt(R.training_minutes / 60, 1)} hours of training in ${R.runs.length} runs and ${fmt(R.step_minutes / 60, 1)} hours of evaluation and studies, ${fmt((R.training_minutes + R.step_minutes) / 60, 1)} hours in all. Runs on the larger data take 3,480 steps instead of 552, and use the largest micro-batch that fits in memory; the effective batch is 16 in every run.`;
 }
 
-const OURS = ['ours_byt5', 'ours_tiny', 'ours_byt5_en', 'ours_tiny_en'];
+const OURS = ['ours_byt5', 'ours_tiny', 'ours_byt5_en', 'ours_tiny_en', 'ours_tiny_script'];
 function renderOurs() {
   const O = X.ours; if (!O || !O.combined) return;
   el('ours').hidden = false;
@@ -660,12 +661,12 @@ function renderOurs() {
     el('oursmt-note').innerHTML = C.oursMtNote || '';
   }
   const T = [['ours_byt5', X.ours_train_byt5], ['ours_tiny', X.ours_train_tiny], ['ours_byt5_en', X.ours_train_byt5_en],
-    ['ours_tiny_en', X.ours_train_tiny_en]].filter(([, i]) => i);
+    ['ours_tiny_en', X.ours_train_tiny_en], ['ours_tiny_script', X.ours_train_tiny_script]].filter(([, i]) => i);
   let tr = '<thead><tr><th>Model</th><th>Parameters</th><th>Trained</th><th>Examples seen</th><th>Minutes</th><th>Peak GPU GB</th></tr></thead><tbody>';
   T.forEach(([k, i]) => {
     const big = k.indexOf('ours_byt5') === 0;
     const params = big ? `${(i.total_params / 1e6).toFixed(0)}M <span class="sd">(${(i.trainable_params / 1e6).toFixed(1)}M LoRA)</span>` : `${(i.params / 1e6).toFixed(1)}M`;
-    const how = big ? `${i.epochs} epoch${i.epochs > 1 ? 's' : ''}${i.en_rows ? ' more, from Manglish-ByT5' : ''}, LoRA r ${i.lora_r}, merged` : `${i.epochs} epochs from scratch`;
+    const how = big ? `${i.epochs} epoch${i.epochs > 1 ? 's' : ''}${i.en_rows ? ' more, from Manglish-ByT5' : ''}, LoRA r ${i.lora_r}, merged` : (i.init_from ? `${i.epochs} epochs more, from ${cname(i.init_from)}` : `${i.epochs} epochs from scratch`);
     const seen = big ? i.examples : i.epochs * (i.clean_rows + i.ml_rows + (i.en_rows || 0) + (i.mlx_rows || 0));
     tr += `<tr><td>${dot(k)}${cname(k)}</td><td class="num">${params}</td><td class="num">${how}</td><td class="num">${seen.toLocaleString()}</td><td class="num">${fmt(i.minutes, 1)}</td><td class="num">${i.peak_gpu_gb === null ? '-' : fmt(i.peak_gpu_gb)}</td></tr>`;
   });
@@ -706,7 +707,8 @@ EXTRA_FILES = (("combined", "combined_all/combined_summary.json"), ("robustness"
                ("profile", "data/dataset_profile.json"), ("runs", "run_times.json"), ("ours", "ours/ours_summary.json"),
                ("ours_train_byt5", "ours/train_info_ours_byt5.json"), ("ours_train_tiny", "ours/train_info_ours_tiny.json"),
                ("ours_train_byt5_en", "ours/train_info_ours_byt5_en.json"),
-               ("ours_train_tiny_en", "ours/train_info_ours_tiny_en.json"), ("ours_en", "ours_en/en_summary.json"),
+               ("ours_train_tiny_en", "ours/train_info_ours_tiny_en.json"),
+               ("ours_train_tiny_script", "ours/train_info_ours_tiny_script.json"), ("ours_en", "ours_en/en_summary.json"),
                ("ours_mt", "ours_en/translators.json"))
 
 

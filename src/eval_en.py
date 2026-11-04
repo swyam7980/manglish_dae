@@ -34,7 +34,8 @@ SETS = ("in22_conv", "in22_gen")
 MODELS = {"ours_byt5": ("byt5", OUT_DIR / "ours_byt5" / "model"),
           "ours_byt5_en": ("byt5", OUT_DIR / "ours_byt5_en" / "model"),
           "ours_tiny": ("tiny", OUT_DIR / "ours_tiny"),
-          "ours_tiny_en": ("tiny", OUT_DIR / "ours_tiny_en")}
+          "ours_tiny_en": ("tiny", OUT_DIR / "ours_tiny_en"),
+          "ours_tiny_script": ("tiny", OUT_DIR / "ours_tiny_script")}
 DIRECT = ("ours_byt5_en", "ours_tiny_en")
 PIVOT = ("ours_byt5", "ours_byt5_en", "ours_tiny_en")
 LABELS = {"ours_byt5_en": "Manglish-ByT5 + English (ours), direct",
@@ -44,7 +45,7 @@ LABELS = {"ours_byt5_en": "Manglish-ByT5 + English (ours), direct",
           "direct_ours_tiny_en": "Manglish-Tiny + English (ours), direct",
           "nllb_gold": "NLLB-200 on the real Malayalam (ceiling)",
           "ours_byt5": "Manglish-ByT5 (before English)", "ours_tiny": "Manglish-Tiny (before English)",
-          "ours_tiny_en": "Manglish-Tiny + English (ours)"}
+          "ours_tiny_en": "Manglish-Tiny + English (ours)", "ours_tiny_script": "Manglish-Tiny, script-focused (ours)"}
 BOOT = 1000
 
 
@@ -105,6 +106,7 @@ def main(argv=None):
     ap.add_argument("--max-eval", type=int, default=0, help="cap sentences per set (smoke tests)")
     ap.add_argument("--out", default="ours_en")
     ap.add_argument("--device", choices=["cuda", "cpu"])
+    ap.add_argument("--mixed-systems", nargs="+", help="mixed part: only these models (others keep their saved scores)")
     ap.add_argument("--direct", nargs="+", default=list(DIRECT), help="our models translating to English themselves")
     ap.add_argument("--pivot", nargs="+", default=list(PIVOT), help="our script models put in front of NLLB-200")
     a = ap.parse_args(argv)
@@ -192,10 +194,12 @@ def main(argv=None):
         swapped = [r for r in mixed if r["swaps"]]
         res = summary.setdefault("mixed", {"n": len(mixed), "n_with_swaps": len(swapped)})
         res.update(n=len(mixed), n_with_swaps=len(swapped))
-        frame = {"set": [r["set"] for r in swapped], "mixed": [r["mixed"] for r in swapped],
-                 "ml": [r["ml"] for r in swapped], "swaps": [json.dumps(r["swaps"], ensure_ascii=False) for r in swapped]}
-        for name in ("ours_byt5", "ours_byt5_en", "ours_tiny", "ours_tiny_en"):
-            if name not in present:
+        saved = out / "preds_mixed_ml.csv"
+        frame = pd.read_csv(saved).to_dict("list") if saved.exists() and a.mixed_systems else {}
+        frame.update({"set": [r["set"] for r in swapped], "mixed": [r["mixed"] for r in swapped],
+                      "ml": [r["ml"] for r in swapped], "swaps": [json.dumps(r["swaps"], ensure_ascii=False) for r in swapped]})
+        for name in ("ours_byt5", "ours_byt5_en", "ours_tiny", "ours_tiny_en", "ours_tiny_script"):
+            if name not in present or (a.mixed_systems and name not in a.mixed_systems):
                 continue
             tr = Translator(*present[name], device=dev, guard=False)
             if "ml" not in tr.tasks:
@@ -210,7 +214,7 @@ def main(argv=None):
             print(name, json.dumps(res[name]), flush=True)
             del tr
             torch.cuda.empty_cache()
-        pd.DataFrame(frame).to_csv(out / "preds_mixed_ml.csv", index=False)
+        pd.DataFrame(frame).to_csv(saved, index=False)
 
     summary_path.write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")
     write_markdown(summary, out / "en_summary.md")

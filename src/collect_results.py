@@ -15,7 +15,8 @@ STUDY_DIRS = {"combined_all": ["*.csv", "*.json"], "decoding_all": ["decoding_de
               "ours_en": ["*.csv", "*.json", "*.md"]}
 DATA_STATS = ["stats.json", "train_plus_all.stats.json", "ours_ml.stats.json", "ours_en.stats.json"]
 OUR_MODELS = {"ours_byt5": "train_info.json", "ours_tiny": "train_info.json",  # training records, not weights
-              "ours_byt5_en": "train_info.json", "ours_tiny_en": "train_info.json"}
+              "ours_byt5_en": "train_info.json", "ours_tiny_en": "train_info.json",
+              "ours_tiny_script": "train_info.json"}
 
 
 def copy(src, dst):

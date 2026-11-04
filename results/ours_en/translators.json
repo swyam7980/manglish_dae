@@ -102,6 +102,18 @@
    "byt5_noisy": {
     "BLEU": 21.78,
     "chrF": 46.98
+   },
+   "tiny_script_typed": {
+    "BLEU": 27.26,
+    "chrF": 52.56
+   },
+   "tiny_script_noisy": {
+    "BLEU": 23.36,
+    "chrF": 48.7
+   },
+   "tiny_script_mixed": {
+    "BLEU": 27.1,
+    "chrF": 52.39
    }
   }
  },
@@ -208,6 +220,18 @@
    "byt5_noisy": {
     "BLEU": 18.0,
     "chrF": 42.92
+   },
+   "tiny_script_typed": {
+    "BLEU": 23.21,
+    "chrF": 48.7
+   },
+   "tiny_script_noisy": {
+    "BLEU": 17.99,
+    "chrF": 42.58
+   },
+   "tiny_script_mixed": {
+    "BLEU": 22.26,
+    "chrF": 47.88
    }
   }
  },
@@ -267,13 +291,31 @@
    "hi": 3.08
   },
   {
+   "set": "in22_conv",
+   "input": "typed",
+   "a": "it2_1b from byt5",
+   "b": "it2_1b from tiny_en",
+   "mean": -0.46,
+   "lo": -0.91,
+   "hi": -0.01
+  },
+  {
+   "set": "in22_conv",
+   "input": "typed",
+   "a": "it2_1b from tiny_script",
+   "b": "it2_1b from tiny_en",
+   "mean": 0.57,
+   "lo": 0.17,
+   "hi": 0.97
+  },
+  {
    "set": "in22_gen",
    "input": "gold",
    "a": "it2_1b",
    "b": "it2_dist",
    "mean": 1.43,
-   "lo": 0.97,
-   "hi": 1.85
+   "lo": 1.01,
+   "hi": 1.86
   },
   {
    "set": "in22_gen",
@@ -281,8 +323,8 @@
    "a": "it2_1b",
    "b": "it2_dist",
    "mean": 1.26,
-   "lo": 0.83,
-   "hi": 1.71
+   "lo": 0.85,
+   "hi": 1.67
   },
   {
    "set": "in22_gen",
@@ -290,8 +332,8 @@
    "a": "it2_1b",
    "b": "opus",
    "mean": 36.35,
-   "lo": 35.33,
-   "hi": 37.35
+   "lo": 35.39,
+   "hi": 37.37
   },
   {
    "set": "in22_gen",
@@ -299,8 +341,8 @@
    "a": "it2_1b",
    "b": "opus",
    "mean": 26.61,
-   "lo": 25.68,
-   "hi": 27.57
+   "lo": 25.67,
+   "hi": 27.62
   },
   {
    "set": "in22_gen",
@@ -308,8 +350,8 @@
    "a": "it2_1b",
    "b": "nllb",
    "mean": 6.55,
-   "lo": 5.88,
-   "hi": 7.24
+   "lo": 5.86,
+   "hi": 7.26
   },
   {
    "set": "in22_gen",
@@ -317,8 +359,26 @@
    "a": "it2_1b",
    "b": "nllb",
    "mean": 4.58,
-   "lo": 3.93,
-   "hi": 5.27
+   "lo": 3.88,
+   "hi": 5.26
+  },
+  {
+   "set": "in22_gen",
+   "input": "typed",
+   "a": "it2_1b from byt5",
+   "b": "it2_1b from tiny_en",
+   "mean": -0.83,
+   "lo": -1.23,
+   "hi": -0.36
+  },
+  {
+   "set": "in22_gen",
+   "input": "typed",
+   "a": "it2_1b from tiny_script",
+   "b": "it2_1b from tiny_en",
+   "mean": 1.17,
+   "lo": 0.85,
+   "hi": 1.51
   }
  ]
 }
