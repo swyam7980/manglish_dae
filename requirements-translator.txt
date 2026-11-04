@@ -1,0 +1,12 @@
+# The second stage (IndicTrans2) needs an older transformers than the project, so these go in their own folder:
+#   pip install --target .deps_mt --no-deps -r requirements-translator.txt
+transformers==4.46.3
+tokenizers==0.20.3
+huggingface_hub==0.26.2
+sacremoses
+indic-nlp-library-itt
+requests
+regex
+joblib
+cloudpickle
+click

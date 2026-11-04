@@ -196,7 +196,28 @@ direct English is weak.
 | Manglish-Tiny / + English | 7.60 / 11.02 → 7.43 / 10.56 | 16.9% → 35.3% |
 
 Cleaning stays at 2.3% CER on the combined test for all four models. The direct English is usable for short everyday
-sentences only; the hosted demo labels it "rough".
+sentences only, so English now takes two steps: our model writes Malayalam script, and a dedicated translator turns
+that into English. `eval_translators.py` compared the candidates on the same IN22 sentences, all with beam 5
+(`results/ours_en/translators.md`):
+
+| Translator, BLEU / chrF | Conversation, typed Manglish | Conversation, real Malayalam | General, typed Manglish | General, real Malayalam |
+|---|---|---|---|---|
+| IndicTrans2 1B (MIT), chosen | 26.6 / 52.0 | 31.2 / 55.4 | 21.9 / 47.7 | 40.2 / 66.1 |
+| IndicTrans2 distilled (MIT) | 25.9 / 51.6 | 30.5 / 55.1 | 20.6 / 46.5 | 38.2 / 64.6 |
+| NLLB-200 distilled (CC BY-NC, baseline only) | 23.3 / 48.6 | 26.9 / 51.5 | 17.4 / 43.5 | 31.6 / 59.4 |
+| Opus-MT ml-en (Apache 2.0) | 10.8 / 32.2 | 13.8 / 34.7 | 4.7 / 23.9 | 5.8 / 28.6 |
+
+The gap between typed Manglish and real Malayalam comes from errors in our script step. To run the chain:
+
+```bash
+pip install --target .deps_mt --no-deps -r requirements-translator.txt
+python app.py
+python src/pipeline.py "naale mazha peyyumo"
+```
+
+The translator is gated: request access at https://huggingface.co/ai4bharat/indictrans2-indic-en-1B, then download it
+with `hf download ai4bharat/indictrans2-indic-en-1B --exclude "pytorch_model.bin"`. `.deps_mt` holds the older
+transformers its custom code needs; the rest of the project keeps its own.
 
 ### Free hosting
 

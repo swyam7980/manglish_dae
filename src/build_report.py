@@ -148,6 +148,7 @@ BODY = r"""<script>try { const t = localStorage.getItem("manglish-theme"); if (t
       <div class="panel"><h3>Manglish to English, IN22 benchmark (BLEU / chrF, higher is better)</h3><table id="oursen"></table><p class="note" id="oursen-note"></p></div>
       <div class="panel"><h3>English words typed into Manglish, script task (807 IN22 sentences)</h3><table id="oursmix"></table><p class="note" id="oursmix-note"></p></div>
     </div>
+    <div class="panel" id="oursmt-panel" hidden><h3>Choosing the translator: Manglish to English in two steps, IN22 (BLEU / chrF, beam 5)</h3><table id="oursmt"></table><p class="note" id="oursmt-note"></p></div>
     <div class="panel"><h3>How they were trained</h3><table id="ourstrain"></table></div>
   </section>
 
@@ -647,6 +648,17 @@ function renderOurs() {
       el('oursmix-note').innerHTML = C.oursMixNote || '';
     }
   }
+  const M = X.ours_mt;
+  if (M && M.in22_conv) {
+    el('oursmt-panel').hidden = false;
+    const NAMES = {it2_1b: 'IndicTrans2 1B (MIT)', it2_dist: 'IndicTrans2 distilled (MIT)', nllb: 'NLLB-200 distilled (CC BY-NC, baseline only)', opus: 'Opus-MT ml-en (Apache 2.0)'};
+    const IN = [['in22_conv', 'tiny_typed', 'conversation, typed'], ['in22_conv', 'tiny_noisy', 'conversation, noisy'], ['in22_conv', 'gold', 'conversation, real Malayalam'], ['in22_gen', 'tiny_typed', 'general, typed'], ['in22_gen', 'tiny_noisy', 'general, noisy'], ['in22_gen', 'gold', 'general, real Malayalam']];
+    const cell = v => v ? `${fmt(v.BLEU, 1)} / ${fmt(v.chrF, 1)}` : '';
+    let m = '<thead><tr><th>Translator</th>' + IN.map(i => `<th>${i[2]}</th>`).join('') + '</tr></thead><tbody>';
+    Object.keys(NAMES).filter(k => M.in22_conv[k]).forEach(k => { m += `<tr><td>${NAMES[k]}</td>` + IN.map(([s, i]) => `<td class="num">${cell(M[s][k] && M[s][k][i])}</td>`).join('') + '</tr>'; });
+    el('oursmt').innerHTML = m + '</tbody>';
+    el('oursmt-note').innerHTML = C.oursMtNote || '';
+  }
   const T = [['ours_byt5', X.ours_train_byt5], ['ours_tiny', X.ours_train_tiny], ['ours_byt5_en', X.ours_train_byt5_en],
     ['ours_tiny_en', X.ours_train_tiny_en]].filter(([, i]) => i);
   let tr = '<thead><tr><th>Model</th><th>Parameters</th><th>Trained</th><th>Examples seen</th><th>Minutes</th><th>Peak GPU GB</th></tr></thead><tbody>';
@@ -694,7 +706,8 @@ EXTRA_FILES = (("combined", "combined_all/combined_summary.json"), ("robustness"
                ("profile", "data/dataset_profile.json"), ("runs", "run_times.json"), ("ours", "ours/ours_summary.json"),
                ("ours_train_byt5", "ours/train_info_ours_byt5.json"), ("ours_train_tiny", "ours/train_info_ours_tiny.json"),
                ("ours_train_byt5_en", "ours/train_info_ours_byt5_en.json"),
-               ("ours_train_tiny_en", "ours/train_info_ours_tiny_en.json"), ("ours_en", "ours_en/en_summary.json"))
+               ("ours_train_tiny_en", "ours/train_info_ours_tiny_en.json"), ("ours_en", "ours_en/en_summary.json"),
+               ("ours_mt", "ours_en/translators.json"))
 
 
 def main(argv=None):

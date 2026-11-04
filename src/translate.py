@@ -43,7 +43,7 @@ class Translator:
                 sys.exit(f"No model in {folder}. Train with train_ours.py or download it (see README).")
             dtype = torch.bfloat16 if self.dev == "cuda" and torch.cuda.is_bf16_supported() else torch.float32
             self.tok = AutoTokenizer.from_pretrained(folder)
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(folder, dtype=dtype).to(self.dev).eval()
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(folder, torch_dtype=dtype).to(self.dev).eval()
         elif kind == "tiny":
             if not (folder / "model.pt").exists():
                 sys.exit(f"No model in {folder}. Train with train_tiny.py or download it (see README).")
