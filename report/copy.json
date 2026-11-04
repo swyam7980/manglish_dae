@@ -34,16 +34,6 @@
    "Try it in your browser",
    "demo/",
    true
-  ],
-  [
-   "Same demo on Hugging Face",
-   "https://huggingface.co/spaces/blackdemon112/manglish-translator-demo",
-   false
-  ],
-  [
-   "Download the weights",
-   "https://huggingface.co/blackdemon112/manglish-translator",
-   false
   ]
  ],
  "oursRobNote": "Same 600-sentence subsample and noise conditions as above. <strong>Not a like-for-like comparison:</strong> our models trained on all six noise types, while the comparison models saw only the base noise, so this shows what training on the noise buys (vowel dropping 8.2% and 7.2% against 18.2% for ByT5 + data; phonetic spellings 2.6% against 17.7%), not that our models generalise better to unseen noise.",

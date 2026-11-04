@@ -20,6 +20,7 @@
   --accent: #7b9cff; --on-accent: #0e1218; --bad: #ef7a6d; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--sans); }
 .wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 64px; display: grid; gap: 24px; }
 header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
@@ -54,24 +55,29 @@ output.ml { font-family: var(--ml); font-size: 18px; }
   <header>
     <div>
       <h1>Manglish translator</h1>
-      <p class="lede"><span id="lede-tasks">Clean up noisy romanised Malayalam, or write it in Malayalam script.</span> This page runs Manglish-Tiny, a small model, entirely in your browser: nothing you type leaves your device.</p>
+      <p class="lede">Clean up noisy romanised Malayalam, or write it in Malayalam script. This page runs Manglish-Tiny, a small model, entirely in your browser from files on your PC: neither the model nor anything you type leaves your device.</p>
     </div>
     <nav>
       <a id="results-link" href="../">Results</a>
-      <a id="space-link" href="#" hidden>Hugging Face Space</a>
-      <a id="weights-link" href="#" hidden>Weights</a>
       <button class="theme" id="theme" type="button">Theme</button>
     </nav>
   </header>
+
+  <section class="panel" id="loader">
+    <div>
+      <label for="model-files">Load the model from your PC</label>
+      <input id="model-files" type="file" webkitdirectory multiple>
+    </div>
+    <p class="note">Choose the model folder. It needs <code>encoder.int8.onnx</code>, <code>decoder.int8.onnx</code>, <code>vocab.json</code> and <code>config.json</code>; in the project they are in <code>outputs/ours_tiny_en/onnx</code>.</p>
+  </section>
 
   <section class="panel">
     <div class="controls">
       <div class="seg" role="group" aria-label="Task">
         <button type="button" data-task="clean" aria-pressed="true">Clean Manglish</button>
         <button type="button" data-task="ml" aria-pressed="false">To Malayalam script</button>
-        <button type="button" data-task="en" aria-pressed="false" hidden>To English (rough)</button>
       </div>
-      <button class="go" id="go" type="button" disabled>Loading model…</button>
+      <button class="go" id="go" type="button" disabled>Load the model first</button>
     </div>
     <div class="io">
       <div><label for="src">Manglish, one sentence per line</label>
@@ -83,15 +89,15 @@ ente ammaye ariyooo</textarea></div>
     <div class="status" id="status"></div>
   </section>
 
-  <p class="note" id="note">Trained on the same 18,548 training sentences (SeLLaI Manglish, SeLLaI Mixed-Code, Dakshina) used to compare mBART-50, mT5 and ByT5, plus Dakshina's Malayalam-script pairs. On the 2,059-sentence held-out test it is as accurate as the 580M-parameter Manglish-ByT5 (2.3% character error for both); to run ByT5, download the weights and use the project's local interface.</p>
+  <p class="note">Trained on the 18,548 sentences used to compare mBART-50, mT5 and ByT5, Dakshina's script pairs and about 212,000 Malayalam-English sentence pairs written in Manglish. It cleans as accurately as the 580M-parameter Manglish-ByT5 (2.3% character error on 2,059 held-out sentences) and writes script more accurately (7.4% against 9.8%). English words typed into Manglish become Malayalam words about a third of the time.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
 <script>
 const ORT_DIST = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
 const EXAMPLES = { clean: ['njaaan naaale varummm', 'ente ammaye ariyooo', 'beachhh sidil jogginggg cheyyunna aalukal'],
-                   ml: ['njan tomorrow varum', 'ente veedu', 'kerala sarkkar'],
-                   en: ['njan tomorrow varum', 'ente veedu evideyaanu', 'naale mazha peyyumo'] };
+                   ml: ['njan tomorrow varum', 'ente veedu', 'kerala sarkkar'] };
+const MODEL_FILES = ['encoder.int8.onnx', 'decoder.int8.onnx', 'vocab.json', 'config.json'];
 const GUARD_MIN_RATIO = 0.6;
 const $ = id => document.getElementById(id);
 let task = 'clean', enc, dec, vocab, cfg, index;
@@ -152,9 +158,26 @@ function setTask(t) {
   $('examples').innerHTML = '';
   for (const ex of EXAMPLES[t]) {
     const b = document.createElement('button'); b.type = 'button'; b.textContent = ex;
-    b.onclick = () => { $('src').value = ex; run(); };
+    b.onclick = () => { $('src').value = ex; if (enc) run(); };
     $('examples').append(b);
   }
+}
+
+async function loadModel(fileList) {
+  const files = new Map(Array.from(fileList, f => [f.name, f]));
+  const missing = MODEL_FILES.filter(n => !files.has(n));
+  if (missing.length) { status('This folder is missing ' + missing.join(', '), true); return; }
+  $('go').disabled = true; $('go').textContent = 'Loading model…'; status('Reading the model from your PC…');
+  try {
+    [vocab, cfg] = await Promise.all(['vocab.json', 'config.json'].map(async n => JSON.parse(await files.get(n).text())));
+    index = new Map(vocab.chars.map((c, i) => [c, i + vocab.n_special]));
+    const session = async n => ort.InferenceSession.create(new Uint8Array(await files.get(n).arrayBuffer()));
+    [enc, dec] = await Promise.all([session('encoder.int8.onnx'), session('decoder.int8.onnx')]);
+    $('go').disabled = false; $('go').textContent = 'Translate';
+    $('loader').hidden = true;
+    status('Model ready.');
+    run();
+  } catch (e) { enc = null; status('Could not load the model: ' + e.message, true); $('go').textContent = 'Load the model first'; }
 }
 
 async function init() {
@@ -166,26 +189,10 @@ async function init() {
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem('manglish-theme', next); } catch (e) {}
   };
-  try {
-    const links = await fetch('links.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
-    if (links.results) $('results-link').href = links.results;
-    if (links.space && !location.hostname.endsWith('hf.space')) { $('space-link').href = links.space; $('space-link').hidden = false; }
-    if (links.weights) { $('weights-link').href = links.weights; $('weights-link').hidden = false; }
-    ort.env.wasm.wasmPaths = ORT_DIST;
-    status('Downloading the model…');
-    [vocab, cfg] = await Promise.all([fetch('model/vocab.json').then(r => r.json()), fetch('model/config.json').then(r => r.json())]);
-    if ('en' in vocab.task_tokens) {  // a model trained with the English task
-      document.querySelector('.seg [data-task="en"]').hidden = false;
-      $('lede-tasks').textContent = 'Clean up noisy romanised Malayalam, write it in Malayalam script, or translate it to English.';
-      $('note').textContent = 'Cleaning and script: trained on the 18,548 sentences used to compare mBART-50, mT5 and ByT5, Dakshina’s script pairs and about 212,000 Malayalam-English sentence pairs written in Manglish. It cleans as accurately as the 580M-parameter Manglish-ByT5 (2.3% character error on 2,059 held-out sentences) and writes script more accurately (7.4% against 9.8%); English words typed into Manglish become Malayalam words about a third of the time. English: rough. Short everyday sentences come out fine, longer ones garbled (BLEU 4 on the IN22 conversation benchmark; Manglish-ByT5 gets 9 in the local interface).';
-    }
-    index = new Map(vocab.chars.map((c, i) => [c, i + vocab.n_special]));
-    [enc, dec] = await Promise.all([ort.InferenceSession.create('model/encoder.int8.onnx'),
-                                    ort.InferenceSession.create('model/decoder.int8.onnx')]);
-    $('go').disabled = false; $('go').textContent = 'Translate';
-    status('Model ready.');
-    run();
-  } catch (e) { status('Could not load the model: ' + e.message, true); $('go').textContent = 'Unavailable'; }
+  ort.env.wasm.wasmPaths = ORT_DIST;
+  $('model-files').onchange = e => loadModel(e.target.files);
+  const links = await fetch('links.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  if (links.results) $('results-link').href = links.results;
 }
 init();
 </script>

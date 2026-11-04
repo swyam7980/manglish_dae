@@ -200,9 +200,9 @@ sentences only; the hosted demo labels it "rough".
 
 ### Free hosting
 
-* **Browser demo (no server):** `python src/build_demo.py` then `python src/publish_pages.py` adds `demo/` to the
-  gh-pages branch; Manglish-Tiny runs inside the visitor's browser with onnxruntime-web, at
-  `https://<user>.github.io/<repository>/demo/`.
+* **Browser demo (no server, no model on the site):** `python src/build_demo.py` then `python src/publish_pages.py` adds
+  `demo/` to the gh-pages branch, at `https://<user>.github.io/<repository>/demo/`. The visitor picks the model folder
+  on their own PC and Manglish-Tiny runs in their browser with onnxruntime-web.
 * **Weights:** `python src/publish_hub.py --repo <hf-user>/manglish-translator` builds `outputs/hub/` (both models and
   a model card) and `outputs/space/` (the same browser demo as a static Space). Upload with your own token:
 
@@ -218,8 +218,8 @@ hf upload <hf-user>/manglish-translator-demo outputs/space . --repo-type space
   repo). Build the demo with `--results`, `--space` and `--weights` links before `publish_hub.py`, so both copies of
   the demo point to them.
 
-Published copies: weights at https://huggingface.co/blackdemon112/manglish-translator, demo at
-https://huggingface.co/spaces/blackdemon112/manglish-translator-demo and https://swyam7980.github.io/manglish_dae/demo/.
+The weights are not published yet. The demo at https://swyam7980.github.io/manglish_dae/demo/ holds no model: it asks
+for the model folder on your PC (`outputs/ours_tiny_en/onnx`) and runs it in the browser.
 
 **Results** (single seed; full tables in `results/ours/ours_summary.md`): on the 2,059-sentence combined test both models
 reach 2.3% CER against 3.5% for the best comparison model (ByT5 + data); Manglish to Malayalam script on 658 held-out
