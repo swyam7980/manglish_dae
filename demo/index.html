@@ -68,7 +68,7 @@ output.ml { font-family: var(--ml); font-size: 18px; }
       <label for="model-files">Load the model from your PC</label>
       <input id="model-files" type="file" webkitdirectory multiple>
     </div>
-    <p class="note">Choose the model folder. It needs <code>encoder.int8.onnx</code>, <code>decoder.int8.onnx</code>, <code>vocab.json</code> and <code>config.json</code>; in the project they are in <code>outputs/ours_tiny_en/onnx</code>.</p>
+    <p class="note">Choose the model folder. It needs <code>encoder.int8.onnx</code>, <code>decoder.int8.onnx</code>, <code>vocab.json</code> and <code>config.json</code>; in the project they are in <code>outputs/ours_tiny_script/onnx</code>.</p>
   </section>
 
   <section class="panel">
@@ -89,7 +89,7 @@ ente ammaye ariyooo</textarea></div>
     <div class="status" id="status"></div>
   </section>
 
-  <p class="note">Trained on the 18,548 sentences used to compare mBART-50, mT5 and ByT5, Dakshina's script pairs and about 212,000 Malayalam-English sentence pairs written in Manglish. It cleans as accurately as the 580M-parameter Manglish-ByT5 (2.3% character error on 2,059 held-out sentences) and writes script more accurately (7.4% against 9.8%). English words typed into Manglish become Malayalam words about a third of the time.</p>
+  <p class="note">Trained on the 18,548 sentences used to compare mBART-50, mT5 and ByT5, Dakshina's script pairs and the Malayalam side of about 212,000 Malayalam-English sentence pairs written in Manglish. It cleans noisy Manglish with 2.2% character error on 2,059 held-out sentences, better than the 580M-parameter Manglish-ByT5 (2.3%), and writes Malayalam script with 7.5% character error from typed and 10.1% from noisy input. English words typed into Manglish become the right Malayalam word 41% of the time.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
