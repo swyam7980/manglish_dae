@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manglish Translator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Malayalam:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #f3f3f3; --surface: #ffffff; --fg: #131313; --muted: #5c5c5c; --line: #dcdcdc; --soft: #ebebeb;
+  --accent: #ff3f02; --on-accent: #ffffff; --bad: #b3261e;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --ml: "Noto Sans Malayalam", "Instrument Sans", system-ui, sans-serif;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0e1218; --surface: #161b23; --fg: #e8ebf1; --muted: #9aa5b6; --line: #2a303b; --soft: #1e2430;
+  --accent: #7b9cff; --on-accent: #0e1218; --bad: #ef7a6d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--sans); }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 64px; display: grid; gap: 24px; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.lede { margin: 8px 0 0; color: var(--muted); max-width: 62ch; }
+nav { display: flex; gap: 16px; font-size: 14px; }
+a { color: var(--fg); text-underline-offset: 3px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 16px; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--soft); }
+.seg button { border: 0; background: transparent; color: var(--fg); font: 500 14px var(--sans); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
+.io { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .io { grid-template-columns: 1fr; } }
+label { display: block; font: 500 12px var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
+textarea, output { width: 100%; min-height: 168px; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font: 16px/1.6 var(--mono); background: var(--bg); color: var(--fg); resize: vertical; }
+output { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+output.ml { font-family: var(--ml); font-size: 18px; }
+.go { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px; font: 600 15px var(--sans); padding: 10px 22px; cursor: pointer; }
+.go:disabled { opacity: 0.5; cursor: progress; }
+.status { font: 13px var(--mono); color: var(--muted); min-height: 1.4em; }
+.status.err { color: var(--bad); }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; }
+.examples button { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 5px 12px; font: 13px var(--mono); cursor: pointer; }
+.note { font-size: 14px; color: var(--muted); max-width: 70ch; margin: 0; }
+.theme { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 4px 12px; font: 13px var(--sans); cursor: pointer; }
+</style>
+<script>try { const t = localStorage.getItem('manglish-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Manglish translator</h1>
+      <p class="lede">Clean up noisy romanised Malayalam, or write it in Malayalam script. This page runs Manglish-Tiny, a small model, entirely in your browser from files on your PC: neither the model nor anything you type leaves your device.</p>
+    </div>
+    <nav>
+      <a id="results-link" href="../">Results</a>
+      <button class="theme" id="theme" type="button">Theme</button>
+    </nav>
+  </header>
+
+  <section class="panel" id="loader">
+    <div>
+      <label for="model-files">Load the model from your PC</label>
+      <input id="model-files" type="file" webkitdirectory multiple>
+    </div>
+    <p class="note">Choose the model folder. It needs <code>encoder.int8.onnx</code>, <code>decoder.int8.onnx</code>, <code>vocab.json</code> and <code>config.json</code>; in the project they are in <code>outputs/ours_tiny_en/onnx</code>.</p>
+  </section>
+
+  <section class="panel">
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Task">
+        <button type="button" data-task="clean" aria-pressed="true">Clean Manglish</button>
+        <button type="button" data-task="ml" aria-pressed="false">To Malayalam script</button>
+      </div>
+      <button class="go" id="go" type="button" disabled>Load the model first</button>
+    </div>
+    <div class="io">
+      <div><label for="src">Manglish, one sentence per line</label>
+        <textarea id="src" spellcheck="false">njaaan naaale varummm
+ente ammaye ariyooo</textarea></div>
+      <div><label for="out">Output</label><output id="out" for="src" aria-live="polite"></output></div>
+    </div>
+    <div class="examples" id="examples" aria-label="Examples"></div>
+    <div class="status" id="status"></div>
+  </section>
+
+  <p class="note">Trained on the 18,548 sentences used to compare mBART-50, mT5 and ByT5, Dakshina's script pairs and about 212,000 Malayalam-English sentence pairs written in Manglish. It cleans as accurately as the 580M-parameter Manglish-ByT5 (2.3% character error on 2,059 held-out sentences) and writes script more accurately (7.4% against 9.8%). English words typed into Manglish become Malayalam words about a third of the time.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<script>
+const ORT_DIST = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
+const EXAMPLES = { clean: ['njaaan naaale varummm', 'ente ammaye ariyooo', 'beachhh sidil jogginggg cheyyunna aalukal'],
+                   ml: ['njan tomorrow varum', 'ente veedu', 'kerala sarkkar'] };
+const MODEL_FILES = ['encoder.int8.onnx', 'decoder.int8.onnx', 'vocab.json', 'config.json'];
+const GUARD_MIN_RATIO = 0.6;
+const $ = id => document.getElementById(id);
+let task = 'clean', enc, dec, vocab, cfg, index;
+
+function status(msg, err = false) { $('status').textContent = msg; $('status').className = 'status' + (err ? ' err' : ''); }
+
+function encodeSrc(text) {
+  const ids = [vocab.task_tokens[task]];
+  for (const ch of Array.from(text).slice(0, cfg.max_src - 1)) ids.push(index.get(ch) ?? vocab.unk);
+  return ids;
+}
+function decode(ids) {
+  let s = '';
+  for (const i of ids) { if (i === vocab.eos) break; if (i >= vocab.n_special) s += vocab.chars[i - vocab.n_special]; }
+  return s;
+}
+const tensor = ids => new ort.Tensor('int64', BigInt64Array.from(ids.map(BigInt)), [1, ids.length]);
+
+async function translateLine(text) {
+  const { memory } = await enc.run({ src: tensor(encodeSrc(text)) });
+  const ys = [vocab.bos];
+  for (let step = 0; step < cfg.max_tgt; step++) {
+    const { logits } = await dec.run({ tgt: tensor(ys), memory });
+    let best = 0, bv = -Infinity;
+    for (let i = 0; i < logits.data.length; i++) if (logits.data[i] > bv) { bv = logits.data[i]; best = i; }
+    if (best === vocab.eos) break;
+    ys.push(best);
+  }
+  return decode(ys.slice(1)).trim();
+}
+// same rules as generation.py: collapse 3+ repeated letters; replace outputs far shorter than the input
+const collapseRuns = t => t.replace(/(\p{L})\1{2,}/gu, '$1$1');
+function guard(pred, noisy) {
+  const fb = collapseRuns(noisy);
+  return pred.replace(/ /g, '').length < GUARD_MIN_RATIO * fb.replace(/ /g, '').length ? fb : pred;
+}
+
+async function run() {
+  const lines = $('src').value.split('\n').map(l => l.trim().toLowerCase()).filter(Boolean).slice(0, 50);
+  if (!lines.length) return;
+  $('go').disabled = true; status('Translating…');
+  const t0 = performance.now(), out = [];
+  try {
+    for (const l of lines) {
+      const p = await translateLine(l);
+      out.push(task === 'clean' ? guard(p, l) : p);
+      $('out').textContent = out.join('\n');
+    }
+    status(`${lines.length} line${lines.length > 1 ? 's' : ''} in ${((performance.now() - t0) / 1000).toFixed(2)} s, on this device`);
+  } catch (e) { status('Error: ' + e.message, true); }
+  $('go').disabled = false;
+}
+
+function setTask(t) {
+  task = t;
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.task === t)));
+  $('out').classList.toggle('ml', t === 'ml');
+  $('examples').innerHTML = '';
+  for (const ex of EXAMPLES[t]) {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = ex;
+    b.onclick = () => { $('src').value = ex; if (enc) run(); };
+    $('examples').append(b);
+  }
+}
+
+async function loadModel(fileList) {
+  const files = new Map(Array.from(fileList, f => [f.name, f]));
+  const missing = MODEL_FILES.filter(n => !files.has(n));
+  if (missing.length) { status('This folder is missing ' + missing.join(', '), true); return; }
+  $('go').disabled = true; $('go').textContent = 'Loading model…'; status('Reading the model from your PC…');
+  try {
+    [vocab, cfg] = await Promise.all(['vocab.json', 'config.json'].map(async n => JSON.parse(await files.get(n).text())));
+    index = new Map(vocab.chars.map((c, i) => [c, i + vocab.n_special]));
+    const session = async n => ort.InferenceSession.create(new Uint8Array(await files.get(n).arrayBuffer()));
+    [enc, dec] = await Promise.all([session('encoder.int8.onnx'), session('decoder.int8.onnx')]);
+    $('go').disabled = false; $('go').textContent = 'Translate';
+    $('loader').hidden = true;
+    status('Model ready.');
+    run();
+  } catch (e) { enc = null; status('Could not load the model: ' + e.message, true); $('go').textContent = 'Load the model first'; }
+}
+
+async function init() {
+  setTask('clean');
+  document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { setTask(b.dataset.task); if (enc) run(); });
+  $('go').onclick = run;
+  $('theme').onclick = () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('manglish-theme', next); } catch (e) {}
+  };
+  ort.env.wasm.wasmPaths = ORT_DIST;
+  $('model-files').onchange = e => loadModel(e.target.files);
+  const links = await fetch('links.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  if (links.results) $('results-link').href = links.results;
+}
+init();
+</script>
+</body>
+</html>
