@@ -9,6 +9,7 @@ import unicodedata
 
 import torch
 
+from config import OUT_DIR
 from memory import run_with_backoff
 
 SYSTEMS = {"it2_dist": ("indictrans", "ai4bharat/indictrans2-indic-en-dist-200M"),
@@ -76,7 +77,8 @@ class IndicProcessor:
 class Translator:
     def __init__(self, name=BEST, device=None, beams=5, max_len=256, path=None):
         self.name, (self.kind, repo) = name, SYSTEMS[name]
-        repo = path or repo
+        fp16 = OUT_DIR / f"{name}_fp16"  # convert_translator.py: half the memory to load
+        repo = path or (fp16 if (fp16 / "model.safetensors").exists() else repo)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.beams, self.max_len = beams, max_len
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
@@ -85,7 +87,8 @@ class Translator:
         self.tok = AutoTokenizer.from_pretrained(repo, trust_remote_code=remote, **extra)
         kw = {"attn_implementation": "eager"} if remote else {}
         dtype = torch.float16 if self.device == "cuda" else torch.float32
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(repo, trust_remote_code=remote, torch_dtype=dtype, **kw)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(repo, trust_remote_code=remote, torch_dtype=dtype,
+                                                           low_cpu_mem_usage=True, **kw)
         self.model = self.model.to(self.device).eval()
         self.proc = IndicProcessor() if remote else None
 
