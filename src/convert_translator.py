@@ -10,32 +10,13 @@ conversion itself never maps the large file. translators.py uses the copy when i
 import argparse
 import json
 import shutil
-import struct
 from pathlib import Path
 
-import torch
 from huggingface_hub import snapshot_download
 from safetensors.torch import save_file
 
 from config import OUT_DIR
-from translators import SYSTEMS
-
-DTYPES = {"F32": torch.float32, "F16": torch.float16, "BF16": torch.bfloat16, "I64": torch.int64}
-
-
-def read_safetensors(path):
-    """{name: tensor} without memory-mapping the file."""
-    with open(path, "rb") as f:
-        n = struct.unpack("<Q", f.read(8))[0]
-        header = json.loads(f.read(n))
-        base = 8 + n
-        for name, meta in header.items():
-            if name == "__metadata__":
-                continue
-            start, end = meta["data_offsets"]
-            f.seek(base + start)
-            t = torch.frombuffer(bytearray(f.read(end - start)), dtype=DTYPES[meta["dtype"]]).reshape(meta["shape"])
-            yield name, t
+from translators import SYSTEMS, read_safetensors
 
 
 def convert(name):

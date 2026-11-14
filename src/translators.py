@@ -5,7 +5,10 @@ folder first on the path:  pip install --target .deps_mt transformers==4.46.3 to
 sacremoses indic-nlp-library-itt requests regex joblib click  ; set PYTHONPATH=.deps_mt
 IndicProcessor below ports the steps of IndicTransToolkit 1.1.1 (a Cython package) that Malayalam-to-English uses.
 """
+import json
+import struct
 import unicodedata
+from pathlib import Path
 
 import torch
 
@@ -19,6 +22,25 @@ SYSTEMS = {"it2_dist": ("indictrans", "ai4bharat/indictrans2-indic-en-dist-200M"
            "nllb": ("nllb", "facebook/nllb-200-distilled-600M")}
 LICENCES = {"it2_dist": "MIT", "it2_1b": "MIT", "opus": "Apache-2.0", "madlad": "Apache-2.0", "nllb": "CC BY-NC 4.0"}
 BEST = "it2_1b"  # highest scores on IN22 among the redistributable translators (results/ours_en/translators.md)
+
+
+DTYPES = {"F32": torch.float32, "F16": torch.float16, "BF16": torch.bfloat16, "I64": torch.int64}
+
+
+def read_safetensors(path):
+    """{name: tensor} from a .safetensors file with plain reads. Windows maps the whole file when safetensors loads it,
+    and with a small page file that ends in "paging file too small" or an access violation for a multi-GB model."""
+    with open(path, "rb") as f:
+        n = struct.unpack("<Q", f.read(8))[0]
+        header = json.loads(f.read(n))
+        base = 8 + n
+        for name, meta in header.items():
+            if name == "__metadata__":
+                continue
+            start, end = meta["data_offsets"]
+            f.seek(base + start)
+            yield name, torch.frombuffer(bytearray(f.read(end - start)),
+                                         dtype=DTYPES[meta["dtype"]]).reshape(meta["shape"])
 
 
 class IndicProcessor:
@@ -87,10 +109,34 @@ class Translator:
         self.tok = AutoTokenizer.from_pretrained(repo, trust_remote_code=remote, **extra)
         kw = {"attn_implementation": "eager"} if remote else {}
         dtype = torch.float16 if self.device == "cuda" else torch.float32
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(repo, trust_remote_code=remote, torch_dtype=dtype,
-                                                           low_cpu_mem_usage=True, **kw)
+        weights = Path(repo) / "model.safetensors"
+        if weights.exists():
+            self.model = self._load_local(repo, weights, dtype, remote, kw)
+        else:
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(repo, trust_remote_code=remote, torch_dtype=dtype,
+                                                               low_cpu_mem_usage=True, **kw)
         self.model = self.model.to(self.device).eval()
         self.proc = IndicProcessor() if remote else None
+
+    @staticmethod
+    def _load_local(repo, weights, dtype, remote, kw):
+        """Build the model, then copy the weights in one tensor at a time with plain file reads. Loading a multi-GB
+        file the usual way maps it whole into memory (and transformers 4.x copies a passed state dict), which crashes
+        on a PC with a small page file."""
+        from transformers import AutoConfig, AutoModelForSeq2SeqLM
+        config = AutoConfig.from_pretrained(repo, trust_remote_code=remote)
+        model = AutoModelForSeq2SeqLM.from_config(config, trust_remote_code=remote, torch_dtype=dtype, **kw)
+        params = model.state_dict()
+        loaded = set()
+        with torch.no_grad():
+            for k, v in read_safetensors(weights):
+                if k in params:
+                    params[k].copy_(v)
+                    loaded.add(k)
+        missing = [k for k in params if k not in loaded and not k.endswith(("lm_head.weight", "embed_positions.weights"))]
+        if missing:
+            raise RuntimeError(f"{len(missing)} weights missing from {weights}, e.g. {missing[:3]}")
+        return model
 
     def _gen_kwargs(self):
         kw = {"num_beams": self.beams, "max_length": self.max_len, "do_sample": False}
