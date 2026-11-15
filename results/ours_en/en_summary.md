@@ -73,3 +73,4 @@ Paired bootstrap on mean sentence chrF, direct model minus pipeline (positive fa
 | Manglish-Tiny (before English) | 16.9% | 0.0% | 33.86 / 61.1 | 32.49 / 62.7 |
 | Manglish-Tiny + English (ours) | 35.3% | 0.2% | 22.18 / 74.5 | 21.27 / 75.8 |
 | Manglish-Tiny, script-focused (ours) | 41.4% | 0.0% | 20.56 / 76.6 | 19.72 / 77.8 |
+| Manglish-Tiny, script + dialect spellings (ours) | 43.8% | 0.0% | 20.08 / 77.4 | 19.25 / 78.5 |

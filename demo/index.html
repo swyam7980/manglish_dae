@@ -68,7 +68,7 @@ output.ml { font-family: var(--ml); font-size: 18px; }
       <label for="model-files">Load the model from your PC</label>
       <input id="model-files" type="file" webkitdirectory multiple>
     </div>
-    <p class="note">Choose the model folder. It needs <code>encoder.int8.onnx</code>, <code>decoder.int8.onnx</code>, <code>vocab.json</code> and <code>config.json</code>; in the project they are in <code>outputs/ours_tiny_script/onnx</code>.</p>
+    <p class="note">Choose the model folder. It needs <code>encoder.int8.onnx</code>, <code>decoder.int8.onnx</code>, <code>vocab.json</code> and <code>config.json</code>; in the project they are in <code>outputs/ours_tiny_dialect/onnx</code>.</p>
   </section>
 
   <section class="panel">
@@ -89,7 +89,7 @@ ente ammaye ariyooo</textarea></div>
     <div class="status" id="status"></div>
   </section>
 
-  <p class="note">Trained on the 18,548 sentences used to compare mBART-50, mT5 and ByT5, Dakshina's script pairs and the Malayalam side of about 212,000 Malayalam-English sentence pairs written in Manglish. It cleans noisy Manglish with 2.2% character error on 2,059 held-out sentences, better than the 580M-parameter Manglish-ByT5 (2.3%), and writes Malayalam script with 7.5% character error from typed and 10.1% from noisy input. English words typed into Manglish become the right Malayalam word 41% of the time.</p>
+  <p class="note">Trained on the 18,548 sentences used to compare mBART-50, mT5 and ByT5, Dakshina's script pairs and the Malayalam side of about 212,000 Malayalam-English sentence pairs written in Manglish. It also learned casual spellings (kayichu for kazhichu, jan for njan, aan for aanu). It cleans noisy Manglish with 2.2% character error on 2,059 held-out sentences, better than the 580M-parameter Manglish-ByT5 (2.3%), and writes Malayalam script with 7.2% character error from typed, 9.7% from noisy and 7.3% from casually spelled input. English words typed into Manglish become the right Malayalam word 44% of the time.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
@@ -142,8 +142,15 @@ async function run() {
   const t0 = performance.now(), out = [];
   try {
     for (const l of lines) {
-      const p = await translateLine(l);
-      out.push(task === 'clean' ? guard(p, l) : p);
+      if (task === 'ml') {  // trained without end punctuation: take it off, write the script, put it back
+        const m = l.match(/[\s.?!,;:]+$/);
+        let p = (await translateLine(m ? l.slice(0, m.index) : l)).replace(/[\s.?!,;:]+$/, '');
+        if (/[\u0d46\u0d47]\u0d02$/.test(p)) p = p.slice(0, -1);  // a stray final sign after a vowel sign
+        out.push(p + (m ? m[0].replace(/\s+/g, '') : ''));
+      } else {
+        const p = await translateLine(l);
+        out.push(guard(p, l));
+      }
       $('out').textContent = out.join('\n');
     }
     status(`${lines.length} line${lines.length > 1 ? 's' : ''} in ${((performance.now() - t0) / 1000).toFixed(2)} s, on this device`);

@@ -10,6 +10,7 @@ Writes results/ours/: preds_*.csv, ours_summary.json, ours_summary.md.
 """
 import argparse
 import json
+import random
 
 import numpy as np
 import pandas as pd
@@ -20,18 +21,20 @@ from extra_data import read_jsonl
 from config import PROC_DIR
 from generation import collapse_runs, length_guard
 from metrics import score
-from noise import CONDITIONS
+from noise import CONDITIONS, dialect_variants
 from robustness import condition_inputs
 from seeds import bootstrap_diff, COMBINED_BOOT
 from translate import Translator
 
 LABELS = {"ours_byt5": "Manglish-ByT5 (ours)", "ours_tiny": "Manglish-Tiny (ours)",
           "ours_byt5_en": "Manglish-ByT5 + English (ours)", "ours_tiny_en": "Manglish-Tiny + English (ours)",
-          "ours_tiny_script": "Manglish-Tiny, script-focused (ours)"}
-KINDS = {"ours_byt5": "byt5", "ours_tiny": "tiny", "ours_byt5_en": "byt5", "ours_tiny_en": "tiny", "ours_tiny_script": "tiny"}
+          "ours_tiny_script": "Manglish-Tiny, script-focused (ours)",
+          "ours_tiny_dialect": "Manglish-Tiny, script + dialect spellings (ours)"}
+KINDS = {"ours_byt5": "byt5", "ours_tiny": "tiny", "ours_byt5_en": "byt5", "ours_tiny_en": "tiny", "ours_tiny_script": "tiny",
+         "ours_tiny_dialect": "tiny"}
 DIRS = {"ours_byt5": OUT_DIR / "ours_byt5" / "model", "ours_tiny": OUT_DIR / "ours_tiny",
         "ours_byt5_en": OUT_DIR / "ours_byt5_en" / "model", "ours_tiny_en": OUT_DIR / "ours_tiny_en",
-        "ours_tiny_script": OUT_DIR / "ours_tiny_script"}
+        "ours_tiny_script": OUT_DIR / "ours_tiny_script", "ours_tiny_dialect": OUT_DIR / "ours_tiny_dialect"}
 COMPARE_WITH = ["byt5_plusall", "mbart_plusall", "mt5_lr1e-3_plusall", "byt5", "mbart"]
 ROB_SAMPLE = 600
 
@@ -67,6 +70,8 @@ def main(argv=None):
     rob = load_eval("test_all.jsonl", min(ROB_SAMPLE, a.max_eval) if a.max_eval else ROB_SAMPLE)
     rob_inputs = {c: condition_inputs(rob, c) for c in CONDITIONS}
     ml = read_jsonl(PROC_DIR / "ours_ml_test.jsonl")[: a.max_eval or None]
+    for i, r in enumerate(ml):  # casual spellings of the clean input, the same for every model
+        r["dialect"] = dialect_variants(r["clean"], random.Random(7_000_003 + i))
 
     if "script" in a.parts:
         refs = [r["native"] for r in ml]
@@ -110,7 +115,7 @@ def main(argv=None):
         if "script" in a.parts:
             refs = [r["native"] for r in ml]
             res = {}
-            for inp in ("clean", "noisy"):
+            for inp in ("clean", "noisy", "dialect"):
                 preds = tr.translate([r[inp] for r in ml], "ml", a.batch)
                 res[inp] = score(preds, refs)
                 pd.DataFrame({"roman": [r[inp] for r in ml], "native": refs, "pred": preds}).to_csv(
@@ -142,10 +147,11 @@ def write_markdown(s, path):
         for name, r in s["robustness"].items():
             lines.append(f"| {name} | " + " | ".join(f"{r[c]['CER']:.2f}" for c in conds) + " |")
     if "script" in s:
-        lines += ["", "## Manglish -> Malayalam script (CER / chrF)", "", "| system | from clean | from noisy |", "|---|---|---|"]
+        lines += ["", "## Manglish -> Malayalam script (CER / chrF)", "",
+                  "| system | from clean | from noisy | from dialect spellings |", "|---|---|---|---|"]
         for name, r in s["script"].items():
-            lines.append(f"| {name} | {r['clean']['CER']:.2f} / {r['clean']['chrF']:.1f} | "
-                         f"{r['noisy']['CER']:.2f} / {r['noisy']['chrF']:.1f} |")
+            lines.append(f"| {name} | " + " | ".join(f"{r[i]['CER']:.2f} / {r[i]['chrF']:.1f}" if i in r else "-"
+                                                for i in ("clean", "noisy", "dialect")) + " |")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

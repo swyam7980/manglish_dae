@@ -7,6 +7,7 @@ All systems use the same decoding (beam 5), and results merge across runs into r
 """
 import argparse
 import json
+import random
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,7 @@ import torch
 import deps_mt  # noqa: F401  (must come before transformers)
 from config import OUT_DIR, RES_DIR
 from eval_en import boot, en_scores, sentence_chrf
+from noise import dialect_variants
 from translators import BEST, LICENCES, SYSTEMS, Translator
 
 SETS = ("in22_conv", "in22_gen")
@@ -23,7 +25,7 @@ INPUTS = {"gold": "ml", "tiny_typed": "script_ours_tiny_en__roman", "tiny_noisy"
           "byt5_noisy": "script_ours_byt5_en__noisy"}
 HEAD = {"gold": "real Malayalam", "tiny_typed": "Tiny, typed", "tiny_noisy": "Tiny, noisy", "tiny_mixed": "Tiny, mixed",
         "byt5_typed": "ByT5, typed", "byt5_noisy": "ByT5, noisy"}
-FIRST_INPUTS = (("typed", "in_roman"), ("noisy", "in_noisy"), ("mixed", "in_mixed"))
+FIRST_INPUTS = (("typed", "in_roman"), ("noisy", "in_noisy"), ("mixed", "in_mixed"), ("dialect", "in_roman"))
 
 
 def short(tag):
@@ -60,7 +62,11 @@ def first_stage_script(tag, frames, batch):
     keys = {}
     for st, f in frames.items():
         for name, col in FIRST_INPUTS:
-            f[f"script_{tag}__{name}"] = tr.translate(f[col].fillna("").astype(str).tolist(), "ml", batch)
+            texts = f[col].fillna("").astype(str).tolist()
+            if name == "dialect":  # the typed input in casual spellings, the same for every model
+                texts = [dialect_variants(t, random.Random(7_000_003 + i)) for i, t in enumerate(texts)]
+                f["in_dialect"] = texts
+            f[f"script_{tag}__{name}"] = tr.translate(texts, "ml", batch)
             keys[f"{short(tag)}_{name}"] = f"script_{tag}__{name}"
     del tr
     torch.cuda.empty_cache()
@@ -130,11 +136,13 @@ def main(argv=None):
                     m, lo, hi = boot(chrf(f"{best}__{k}"), chrf(f"{n}__{k}"), rng)
                     summary["vs"].append({"set": st, "input": k, "a": best, "b": n, "mean": m, "lo": lo, "hi": hi})
         # newer first-stage models against the one the translators were chosen with, through the chosen translator
-        for k in sorted(c[len(BEST) + 2:] for c in f.columns if c.startswith(f"{BEST}__") and c.endswith("_typed")):
-            if k != "tiny_typed" and f"{BEST}__tiny_typed" in f:
-                m, lo, hi = boot(chrf(f"{BEST}__{k}"), chrf(f"{BEST}__tiny_typed"), rng)
-                summary["vs"].append({"set": st, "input": "typed", "a": f"{BEST} from {k[:-6]}",
-                                      "b": f"{BEST} from tiny_en", "mean": m, "lo": lo, "hi": hi})
+        for k in sorted(c[len(BEST) + 2:] for c in f.columns if c.startswith(f"{BEST}__") and c.endswith(("_typed", "_dialect"))):
+            kind = "dialect" if k.endswith("_dialect") else "typed"
+            base = "tiny_script_dialect" if kind == "dialect" else "tiny_typed"
+            if k != base and f"{BEST}__{base}" in f:
+                m, lo, hi = boot(chrf(f"{BEST}__{k}"), chrf(f"{BEST}__{base}"), rng)
+                summary["vs"].append({"set": st, "input": kind, "a": f"{BEST} from {k.rsplit('_', 1)[0]}",
+                                      "b": f"{BEST} from {base.rsplit('_', 1)[0]}", "mean": m, "lo": lo, "hi": hi})
     path.write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")
     write_markdown(summary, out / "translators.md")
     return summary

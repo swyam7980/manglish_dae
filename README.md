@@ -213,7 +213,23 @@ ours_tiny_script --epochs 2 --lr 3e-4` continues from Manglish-Tiny + English wi
 one of the 212,000 pairs as a script example, half of them plain Manglish (67 minutes). Through IndicTrans2 1B it raises
 typed Manglish to 27.3 BLEU on conversation and 23.2 on general (from 26.6 and 21.9; bootstrap on sentence chrF +0.6,
 95% CI +0.2 to +1.0, and +1.2, +0.9 to +1.5), cleans with 2.20% CER, writes script with 7.51 / 10.14% CER from clean /
-noisy input, and turns 41% of English words into the right Malayalam word (35% before). It is now the default Tiny.
+noisy input, and turns 41% of English words into the right Malayalam word (35% before).
+
+People also type the same sounds in casual ways ("kayichu" for "kazhichu", "jan" for "njan", "aan" for "aanu"), which
+the standard romanisations in the training data never show. `noise.py`'s `dialect_variants` writes such spellings
+(zh as y, l or z; nj as j; a first v as w; a final u dropped; cch and tth simplified), and `train_tiny.py --dialect`
+puts them in a quarter of the script inputs. Continuing from the script-focused Tiny for 2 epochs (`--init-from
+ours_tiny_script --tag ours_tiny_dialect`) gives the current default Tiny:
+
+| First step (then IndicTrans2 1B) | English, conversation: typed / noisy / dialect | English, general: typed / noisy / dialect | Script CER: clean / noisy / dialect | Cleaning CER |
+|---|---|---|---|---|
+| Script-focused Tiny | 27.3 / 23.4 / 26.0 | 23.2 / 18.0 / 23.1 | 7.51 / 10.14 / 7.91 | 2.20 |
+| + dialect spellings | **27.6 / 24.1 / 27.3** | **23.5 / 18.4 / 23.1** | **7.17 / 9.73 / 7.33** | **2.15** |
+
+On dialect-spelled conversation the gain is +1.2 sentence chrF (95% CI +0.8 to +1.7); on general text it is within
+noise. The dialect test inputs come from the same rules as the training, so they show the rules were learned, not how
+real chat scores. Script output also goes through end-punctuation handling now: the input's final punctuation is set
+aside, the script is written without it (as in training) and the punctuation is put back.
 To run the chain:
 
 ```bash
@@ -247,7 +263,7 @@ hf upload <hf-user>/manglish-translator-demo outputs/space . --repo-type space
   the demo point to them.
 
 The weights are not published yet. The demo at https://swyam7980.github.io/manglish_dae/demo/ holds no model: it asks
-for the model folder on your PC (`outputs/ours_tiny_script/onnx`) and runs it in the browser.
+for the model folder on your PC (`outputs/ours_tiny_dialect/onnx`) and runs it in the browser.
 
 **Results** (single seed; full tables in `results/ours/ours_summary.md`): on the 2,059-sentence combined test both models
 reach 2.3% CER against 3.5% for the best comparison model (ByT5 + data); Manglish to Malayalam script on 658 held-out

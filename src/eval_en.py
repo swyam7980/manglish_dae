@@ -35,7 +35,8 @@ MODELS = {"ours_byt5": ("byt5", OUT_DIR / "ours_byt5" / "model"),
           "ours_byt5_en": ("byt5", OUT_DIR / "ours_byt5_en" / "model"),
           "ours_tiny": ("tiny", OUT_DIR / "ours_tiny"),
           "ours_tiny_en": ("tiny", OUT_DIR / "ours_tiny_en"),
-          "ours_tiny_script": ("tiny", OUT_DIR / "ours_tiny_script")}
+          "ours_tiny_script": ("tiny", OUT_DIR / "ours_tiny_script"),
+          "ours_tiny_dialect": ("tiny", OUT_DIR / "ours_tiny_dialect")}
 DIRECT = ("ours_byt5_en", "ours_tiny_en")
 PIVOT = ("ours_byt5", "ours_byt5_en", "ours_tiny_en")
 LABELS = {"ours_byt5_en": "Manglish-ByT5 + English (ours), direct",
@@ -45,7 +46,8 @@ LABELS = {"ours_byt5_en": "Manglish-ByT5 + English (ours), direct",
           "direct_ours_tiny_en": "Manglish-Tiny + English (ours), direct",
           "nllb_gold": "NLLB-200 on the real Malayalam (ceiling)",
           "ours_byt5": "Manglish-ByT5 (before English)", "ours_tiny": "Manglish-Tiny (before English)",
-          "ours_tiny_en": "Manglish-Tiny + English (ours)", "ours_tiny_script": "Manglish-Tiny, script-focused (ours)"}
+          "ours_tiny_en": "Manglish-Tiny + English (ours)", "ours_tiny_script": "Manglish-Tiny, script-focused (ours)",
+          "ours_tiny_dialect": "Manglish-Tiny, script + dialect spellings (ours)"}
 BOOT = 1000
 
 
@@ -198,7 +200,7 @@ def main(argv=None):
         frame = pd.read_csv(saved).to_dict("list") if saved.exists() and a.mixed_systems else {}
         frame.update({"set": [r["set"] for r in swapped], "mixed": [r["mixed"] for r in swapped],
                       "ml": [r["ml"] for r in swapped], "swaps": [json.dumps(r["swaps"], ensure_ascii=False) for r in swapped]})
-        for name in ("ours_byt5", "ours_byt5_en", "ours_tiny", "ours_tiny_en", "ours_tiny_script"):
+        for name in ("ours_byt5", "ours_byt5_en", "ours_tiny", "ours_tiny_en", "ours_tiny_script", "ours_tiny_dialect"):
             if name not in present or (a.mixed_systems and name not in a.mixed_systems):
                 continue
             tr = Translator(*present[name], device=dev, guard=False)

@@ -36,7 +36,7 @@ from config import PROC_DIR, OUT_DIR, SEED, EFFECTIVE_BATCH, WARMUP_RATIO, LORA_
 import memory
 from memory import pick_micro_batch, vram_budget_bytes, next_smaller, free_cuda, is_oom
 from models import load_base, load_tokenizer, pick_dtype, count_params
-from noise import corrupt, CONDITIONS
+from noise import corrupt, dialect_variants, CONDITIONS
 from train import make_probe, read_jsonl
 
 TASK_PREFIX = {"clean": "clean: ", "ml": "ml: ", "en": "en: "}
@@ -45,6 +45,8 @@ NOISE_MIX = {"base": 0.45, "heavy": 0.15, "extreme": 0.05, "vowel_drop": 0.10, "
              "phonetic_plus_base": 0.10, "none": 0.05}
 # script-task inputs: typed cleanly, with the usual typos, or spelled another way
 ML_INPUT_MIX = {"none": 0.50, "base": 0.35, "phonetic": 0.15}
+# the same plus casual (dialect) spellings, for the script model
+DIALECT_INPUT_MIX = {"none": 0.40, "base": 0.25, "phonetic": 0.10, "dialect": 0.25}
 # share of swappable Malayalam words written in English: en inputs are often all Manglish, mixed ml inputs never are
 EN_SWAP_MIX = {0.0: 0.4, 0.2: 0.3, 0.5: 0.3}
 MLX_SWAP_MIX = {0.3: 0.5, 0.6: 0.5}
@@ -65,6 +67,8 @@ def noisy_version(text, kind, rng):
         return text
     if kind == "base":
         return corrupt(text, rng)
+    if kind == "dialect":
+        return dialect_variants(text, rng)
     return CONDITIONS[kind](text, rng) or text
 
 
@@ -77,7 +81,8 @@ def pick(mix, rng):
     return next(reversed(mix))
 
 
-def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_rows=(), mlx_rows=(), mlx_mix=MLX_SWAP_MIX):
+def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_rows=(), mlx_rows=(), mlx_mix=MLX_SWAP_MIX,
+                   ml_mix=ML_INPUT_MIX):
     """Fresh noise for every epoch, deterministic in (seed, epoch, row): a resumed run sees the same data.
     en_rows/mlx_rows are en_data.py rows; each epoch draws a new spelling per word and a new set of English swaps."""
     from en_data import render
@@ -88,7 +93,7 @@ def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_row
             out.append({"src": TASK_PREFIX["clean"] + noisy_version(s, pick(NOISE_MIX, rng), rng), "tgt": s})
         for i, r in enumerate(ml_rows):
             rng = random.Random(f"{seed}-ml-{ep}-{i}")
-            out.append({"src": TASK_PREFIX["ml"] + noisy_version(r["roman"], pick(ML_INPUT_MIX, rng), rng),
+            out.append({"src": TASK_PREFIX["ml"] + noisy_version(r["roman"], pick(ml_mix, rng), rng),
                         "tgt": r["native"]})
         for i, r in enumerate(en_rows):
             rng = random.Random(f"{seed}-en-{ep}-{i}")
@@ -97,7 +102,7 @@ def build_examples(clean_rows, ml_rows, epochs, seed=SEED, first_epoch=0, en_row
         for i, r in enumerate(mlx_rows):
             rng = random.Random(f"{seed}-mlx-{ep}-{i}")
             text = render(r["toks"], rng, pick(mlx_mix, rng))
-            out.append({"src": TASK_PREFIX["ml"] + noisy_version(text, pick(ML_INPUT_MIX, rng), rng), "tgt": r["ml"]})
+            out.append({"src": TASK_PREFIX["ml"] + noisy_version(text, pick(ml_mix, rng), rng), "tgt": r["ml"]})
     return out
 
 

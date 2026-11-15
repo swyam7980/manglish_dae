@@ -55,6 +55,19 @@ def phonetic_variants(text: str, rng: random.Random, p: float = 0.5) -> str:
     return text
 
 
+# casual spellings of the same sounds ("kazhicchu" -> "kayichu", "njan" -> "jan", "aanu" -> "aan"); each rule picks
+# one of its replacements per occurrence
+DIALECT_RULES = [(r"zh", ("y", "l", "z")), (r"nj", ("j",)), (r"\bv", ("w",)), (r"(?<=[nmlrkt])u\b", ("",)),
+                 (r"cch", ("ch",)), (r"tth", ("th",))]
+
+
+def dialect_variants(text: str, rng: random.Random, p: float = 0.5) -> str:
+    """Rewrite letters the way people type them in chat rather than the standard romanisation."""
+    for pat, reps in DIALECT_RULES:
+        text = re.sub(pat, lambda m: rng.choice(reps) if rng.random() < p else m.group(0), text)
+    return text if text.strip() else text
+
+
 CONDITIONS = {
     "base": None,
     "heavy": lambda t, r: corrupt(t, r, 0.20, 0.08),

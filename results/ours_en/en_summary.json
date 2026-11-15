@@ -564,6 +564,29 @@
    "swaps": 1243,
    "translated_pct": 41.4,
    "left_in_latin_pct": 0.0
+  },
+  "ours_tiny_dialect": {
+   "mixed_all": {
+    "CER": 20.077,
+    "WER": 39.179,
+    "BLEU": 48.607,
+    "chrF": 77.388
+   },
+   "plain_all": {
+    "CER": 19.252,
+    "WER": 37.958,
+    "BLEU": 50.823,
+    "chrF": 78.498
+   },
+   "mixed_with_swaps": {
+    "CER": 29.68,
+    "WER": 47.956,
+    "BLEU": 37.496,
+    "chrF": 67.871
+   },
+   "swaps": 1243,
+   "translated_pct": 43.8,
+   "left_in_latin_pct": 0.0
   }
  }
 }

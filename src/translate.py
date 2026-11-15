@@ -6,11 +6,12 @@
     python translate.py --task clean --file in.txt --out out.txt
 
 --model byt5 loads outputs/ours_byt5_en/model when it exists (the model that also does en:), else outputs/ours_byt5/model
-(or --model-dir, e.g. a folder downloaded from the Hugging Face Hub); --model tiny loads outputs/ours_tiny_script (else ours_tiny_en) when it
+(or --model-dir, e.g. a folder downloaded from the Hugging Face Hub); --model tiny loads outputs/ours_tiny_dialect (else the older Tiny folders) when it
 exists, else outputs/ours_tiny. Clean-task outputs from ByT5 go through the length guard from the comparison.
 """
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -23,11 +24,19 @@ from tiny_model import load_tiny, pad_batch
 
 TASKS = ("clean", "ml", "en")
 BYT5_DIRS = [OUT_DIR / "ours_byt5_en" / "model", OUT_DIR / "ours_byt5" / "model"]
-TINY_DIRS = [OUT_DIR / "ours_tiny_script", OUT_DIR / "ours_tiny_en", OUT_DIR / "ours_tiny"]
+TINY_DIRS = [OUT_DIR / "ours_tiny_dialect", OUT_DIR / "ours_tiny_script", OUT_DIR / "ours_tiny_en",
+             OUT_DIR / "ours_tiny"]
 DEFAULT_DIRS = {"byt5": next((d for d in BYT5_DIRS if (d / "config.json").exists()), BYT5_DIRS[-1]),
                 "tiny": next((d for d in TINY_DIRS if (d / "model.pt").exists()), TINY_DIRS[-1])}
 BYT5_PREFIX = {"clean": "clean: ", "ml": "ml: ", "en": "en: "}
 BYT5_MAX_SRC, BYT5_MAX_TGT = 192, 384
+END_PUNCT = re.compile(r"[\s.?!,;:]+$")
+
+
+def split_end(text):
+    """(text without its final punctuation, that punctuation squeezed: "pokunne ?" -> ("pokunne", "?"))."""
+    m = END_PUNCT.search(text)
+    return (text[:m.start()], re.sub(r"\s+", "", m.group(0))) if m else (text, "")
 
 
 class Translator:
@@ -77,11 +86,25 @@ class Translator:
         if task not in self.tasks:
             raise ValueError(f"this model does the tasks {self.tasks}, not {task!r}")
         texts = [t.strip().lower() for t in texts]
+        ends = [""] * len(texts)
+        if task == "ml":  # trained without end punctuation: take it off, write the script, put it back
+            texts, ends = map(list, zip(*map(split_end, texts))) if texts else ([], [])
         fn = self._byt5 if self.kind == "byt5" else self._tiny
         preds, _ = run_with_backoff(lambda c: fn(c, task), texts, batch)
+        if task == "ml":
+            preds = [self._tidy_end(p) + e for p, e in zip(preds, ends)]
         if task == "clean" and self.guard:
             preds, _ = length_guard(preds, texts)
         return preds
+
+    @staticmethod
+    def _tidy_end(pred):
+        """Drop trailing punctuation and a stray final anusvara that follows a vowel sign the word cannot end with
+        here ("പോകുന്നേം" -> "പോകുന്നേ"); a real final ം ("വരും") is kept."""
+        core = END_PUNCT.sub("", pred)
+        if core.endswith("േം") or core.endswith("െം"):  # േം / െം
+            core = core[:-1]
+        return core
 
 
 def main(argv=None):

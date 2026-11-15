@@ -16,3 +16,12 @@ def test_markdown_lists_only_scored_inputs(tmp_path):
     write_markdown({"in22_conv": {"it2_1b": {"gold": {"BLEU": 31.2, "chrF": 55.4}}}}, path)
     text = path.read_text(encoding="utf-8")
     assert "| it2_1b | MIT | 31.2 / 55.4 | - |" in text and "in22_gen" not in text
+
+
+def test_dialect_variants_give_casual_spellings():
+    import random
+    from noise import dialect_variants
+    seen = {dialect_variants("njan kazhicchu vannu aanu", random.Random(i)) for i in range(200)}
+    joined = " ".join(seen)
+    assert "jan" in joined and "kayi" in joined and "wannu" in joined and " aan" in joined
+    assert dialect_variants("kerala", random.Random(0)) == "kerala"  # nothing to change
